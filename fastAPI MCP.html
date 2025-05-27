@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI 教程 - 第21-22课: MCP与天气应用 (超小白版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.8;
+            background-color: #f0f4f8; /* 更柔和的淡蓝色背景 */
+            color: #333a45; 
+        }
+        .container {
+            max-width: 850px; /* 稍微加宽一点点 */
+            margin: 25px auto; 
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07); 
+            border-radius: 12px; /* 更圆润的边角 */
+        }
+        h1, h2, h3 {
+            font-weight: 700; /* 标题加粗一些 */
+            margin-top: 1.8em;
+            margin-bottom: 0.8em;
+            color: #1a2b4d; /* 深海军蓝标题 */
+        }
+        h1 {
+            font-size: 2.3rem; 
+            border-bottom: 3px solid #dbe4f0; /* 标题下划线更明显 */
+            padding-bottom: 0.7rem;
+            text-align: center; 
+            margin-bottom: 1.2em; 
+        }
+        h2 {
+            font-size: 1.9rem; /* H2也大一点 */
+            color: #2c3e50; 
+            border-bottom: 2px dashed #e0e6ed; 
+            padding-bottom: 0.5rem;
+            margin-top: 2.2em; 
+        }
+        h3 {
+            font-size: 1.5rem; /* H3也大一点 */
+            color: #34495e; 
+        }
+        p, li {
+            margin-bottom: 1.1em;
+            color: #4a5568; /* 文本颜色稍深 */
+            font-size: 1.1em; /* 文本稍大 */
+        }
+        ul, ol { /* 给有序列表也加上样式 */
+            list-style-position: outside;
+            padding-left: 30px;
+        }
+        ul li::marker { /* 更改无序列表标记颜色 */
+            color: #3498db;
+        }
+        ol li::marker { /* 更改有序列表标记颜色 */
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        code:not(pre code) {
+            background-color: #eaf2f8; 
+            padding: 0.3em 0.6em;
+            margin: 0 0.15em;
+            font-size: 90%;
+            border-radius: 5px;
+            color: #1f618d; 
+            border: 1px solid #d6eaf8;
+            font-family: 'Fira Code', monospace;
+        }
+        pre {
+            background-color: #2c3e50; /* 代码块背景用深海军蓝 */
+            color: #e0e6f0; /* 代码块文字用浅灰色 */
+            padding: 1.5em; /* 代码块内边距加大 */
+            border-radius: 10px; /* 代码块边角更圆润 */
+            overflow-x: auto;
+            margin-top: 0.5em; /* 代码块与上方解释的间距 */
+            margin-bottom: 1.8em;
+            font-size: 1em; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        pre code {
+            font-family: 'Fira Code', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", monospace; 
+        }
+        .note {
+            background-color: #e6f7ff; 
+            border-left: 6px solid #007ace; /* 蓝色调 */
+            padding: 1.5em;
+            margin-top: 1em;
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 122, 206, 0.1);
+        }
+        .note p, .note li { 
+            margin-bottom: 0.6em;
+            color: #005a8c; 
+        }
+        .note p:last-child, .note li:last-child {
+             margin-bottom: 0;
+        }
+        .tip { /* 新增提示样式 */
+            background-color: #e8fdf8;
+            border-left: 6px solid #1abc9c; /* 绿色调 */
+            padding: 1.5em;
+            margin-top: 1em;
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(26, 188, 156, 0.1);
+        }
+        .tip p, .tip li {
+            color: #107c68;
+        }
+        .warning { /* 新增警告样式 */
+            background-color: #fff4e6;
+            border-left: 6px solid #f39c12; /* 橙色调 */
+            padding: 1.5em;
+            margin-top: 1em;
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.1);
+        }
+        .warning p, .warning li {
+            color: #b06c0a;
+        }
+        .output {
+            background-color: #e8f6f3; 
+            border: 1px solid #a3e4d7; 
+            padding: 1em;
+            border-radius: 8px;
+            margin-top: 0.6em;
+            margin-bottom: 1.2em;
+            font-family: 'Fira Code', monospace; 
+            font-size: 0.95em; 
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #138d75; 
+        }
+        .visual-explanation {
+            background-color: #fdf2e9; /* 浅橙色背景 */
+            border: 2px dashed #f5cba7; 
+            padding: 1.5em;
+            margin-top: 1.2em;
+            margin-bottom: 1.8em;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace; 
+            font-size: 1em;
+        }
+        .visual-explanation h4 {
+            font-weight: 700;
+            color: #af601a; 
+            margin-bottom: 0.8em;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2em;
+        }
+        .visual-explanation pre {
+            background-color: #fae5d3; 
+            color: #6e2c00; 
+            padding: 0.8em;
+            border-radius: 6px;
+        }
+        .emoji { 
+            font-size: 1.3em; /* emoji稍大一些 */
+            margin-right: 0.4em;
+            vertical-align: -0.1em; /* 微调垂直对齐 */
+        }
+        hr.section-divider { 
+            border: 0;
+            height: 2px;
+            background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(26, 43, 77, 0.6), rgba(0, 0, 0, 0)); /* 分割线颜色调整 */
+            margin-top: 3.5em;
+            margin-bottom: 3.5em;
+        }
+        .ai-prompt { /* AI提示词的专属样式 */
+            background-color: #f0ebf8; /* 淡紫色背景 */
+            border-left: 6px solid #8e44ad; /* 紫色边框 */
+            padding: 1em 1.5em;
+            margin-top: -1em; /* 紧贴代码块上方 */
+            margin-bottom: 1.5em;
+            border-radius: 0 0 8px 8px; /* 底部圆角，模拟附着感 */
+            font-style: italic;
+            color: #5b2c6f;
+            font-size: 0.95em;
+        }
+        .ai-prompt strong {
+            color: #4a235a;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="container bg-white shadow-lg rounded-lg p-8 my-10">
+        <h1><span class="emoji">🏗️</span>FastAPI 探险新高度: MCP架构与实战应用<span class="emoji">🌦️</span></h1>
+
+        <section id="lesson21-fastapi-mcp">
+            <h2><span class="emoji">🗺️</span>第二十一站: 给项目搭个好架子——FastAPI MCP初探</h2>
+            <p>大家好，小小探险家们！之前我们学习了 FastAPI 的很多零散的“小魔法”，比如怎么定义网址、怎么接收和回复信息。现在，我们要学点更“高大上”的东西了——怎么把我们的代码组织得像一个整齐的工具箱，而不是乱糟糟的抽屉。这就是我们这站要聊的 "MCP"。</p>
+            <p>MCP 这个词听起来可能有点吓人，但别怕！你可以把它想象成一种<strong>盖房子的“蓝图”或者“说明书”</strong>。按照这个蓝图盖房子（写代码），房子就会更稳固、更容易装修（修改代码）、也更容易让别人看懂你的设计。</p>
+            <p>在 FastAPI 的世界里，MCP 通常指的是一种把项目代码分成不同“房间”的方法，每个“房间”负责不同的事情。这样代码就不会挤在一起，找东西、修东西都方便多啦！</p>
+
+            <section id="mcp-concept">
+                <h3><span class="emoji">🤔</span>21.1 MCP 到底是个啥？（小白版解释）</h3>
+                <p>MCP 是几个英文单词的缩写，但咱们先不管那些英文。你可以把它理解成：</p>
+                <ul>
+                    <li><strong>M (Model - 模型/数据管理员)</strong>: 这个“房间”专门负责管理我们的“数据蓝图”。还记得我们用 Pydantic 定义的那些 <code>Item</code>、<code>User</code> 模型吗？它们就住在这个房间。它规定了我们的数据应该长什么样。</li>
+                    <li><strong>C (Controller/Router - 控制器/交通指挥员)</strong>: 这个“房间”像是我们网站的“交通指挥部”。它负责接收从浏览器发来的各种请求（比如用户想看哪个页面、想提交什么信息），然后决定把这些请求交给哪个“工人”去处理。我们之前写的 <code>@app.get("/")</code>、<code>@app.post("/items/")</code> 这些，就属于这个房间的工作。</li>
+                    <li><strong>P (Presenter/Service/Logic - 展示员/服务员/逻辑处理员)</strong>: 这个“房间”是真正干活的地方！当“交通指挥员”把请求分配过来后，这里的“工人”就负责具体的业务逻辑，比如从数据库里找东西、计算数据、或者调用其他工具来完成任务。然后它会把处理好的结果告诉“交通指挥员”，再由指挥员回复给用户。</li>
+                </ul>
+                <div class="visual-explanation">
+                    <h4><span class="emoji">🏠</span>图解：MCP 就像分工合作的工坊</h4>
+                    <pre>
+用户 (浏览器) --(发出请求)--> [ C: 交通指挥员 (Router) ]
+                                      | (分配任务)
+                                      v
+                                [ P: 逻辑处理员 (Service) ]
+                                      ^   | (需要数据蓝图？)
+                                      |   v
+                                [ M: 数据管理员 (Model) ] -- (提供数据蓝图/校验数据)
+                                      |
+                                      v (处理结果)
+用户 (浏览器) &lt;--(回复信息)-- [ C: 交通指挥员 (Router) ] &lt;--(拿到处理结果)
+                    </pre>
+                </div>
+                <p>用 MCP 的好处就是，每个“房间”各司其职，代码不会混在一起，以后项目变大了，也更容易维护和添加新功能。</p>
+            </section>
+
+            <section id="mcp-project-structure">
+                <h3><span class="emoji">📁</span>21.2 按 MCP 整理我们的“文件夹”（项目结构）</h3>
+                <p>为了让代码更整齐，我们可以创建不同的文件夹来存放不同“房间”的代码。一个常见的 FastAPI MCP 项目结构可能长这样：</p>
+                <div class="visual-explanation">
+                    <h4><span class="emoji">🗂️</span>图解：一个简单的 MCP 项目文件夹样子</h4>
+                    <pre>
+my_awesome_project/
+├── app/                     &lt;-- 我们主要的 FastAPI 应用代码都在这里
+│   ├── __init__.py          &lt;-- 让 Python 知道这是个包
+│   ├── main.py              &lt;-- FastAPI 应用的主入口，创建 app 实例的地方
+│   ├── core/                &lt;-- 核心配置、通用工具等
+│   │   ├── config.py        &lt;-- 放一些配置信息，比如API密钥
+│   │   └── __init__.py
+│   ├── models/              &lt;-- M: 数据管理员的家 (存放 Pydantic 模型)
+│   │   ├── item_model.py
+│   │   ├── user_model.py
+│   │   └── __init__.py
+│   ├── schemas/             &lt;-- 有时候也会把 Pydantic 模型叫 schemas，和 models 类似
+│   │   ├── item_schema.py
+│   │   └── __init__.py
+│   ├── services/            &lt;-- P: 逻辑处理员的办公室 (存放业务逻辑)
+│   │   ├── item_service.py
+│   │   └── __init__.py
+│   ├── routers/             &lt;-- C: 交通指挥员的岗位 (存放路径操作/API接口定义)
+│   │   ├── items_router.py
+│   │   ├── users_router.py
+│   │   └── __init__.py
+│   └── dependencies.py      &lt;-- 放一些通用的“好帮手”（依赖项）
+│
+├── tests/                   &lt;-- 写测试代码的地方 (我们暂时不讲这个)
+├── requirements.txt         &lt;-- 项目需要安装哪些第三方库写在这里
+└── .env                     &lt;-- (可选) 存放一些敏感配置，比如数据库密码
+                    </pre>
+                </div>
+                <p>这只是一个例子，不同项目可能会有些不一样，但核心思想就是把不同功能的代码分门别类放好。</p>
+            </section>
+
+            <section id="mcp-example-setup">
+                <h3><span class="emoji">🛠️</span>21.3 搭建一个迷你 MCP 架子</h3>
+                <p>我们来动手搭一个最最简单的架子，为下一站的天气查询应用做准备。</p>
+                <p><strong>第一步：创建文件夹结构</strong></p>
+                <p>在你的电脑上，先创建一个项目文件夹，比如叫 <code>my_weather_app</code>。然后在里面创建这样的结构：</p>
+                <pre><code>
+my_weather_app/
+└── app/
+    ├── __init__.py
+    ├── main.py
+    ├── core/
+    │   ├── __init__.py
+    │   └── config.py
+    ├── schemas/
+    │   ├── __init__.py
+    │   └── weather_schema.py
+    ├── services/
+    │   ├── __init__.py
+    │   └── weather_service.py
+    └── routers/
+        ├── __init__.py
+        └── weather_router.py
+                </code></pre>
+                <p>你可以手动创建这些文件夹和空的 <code>.py</code> 文件。<code>__init__.py</code> 文件可以是空的，它的作用是告诉 Python 这个文件夹是一个可以导入的“包”。</p>
+
+                <p><strong>第二步：安装 FastAPI 和 Uvicorn</strong></p>
+                <p>如果你还没装，打开你的命令行工具，输入：</p>
+                <div class="note">
+                    <p><span class="emoji">💬</span> <strong>AI提示词参考</strong>: "我需要安装 FastAPI 和 Uvicorn 这两个 Python 包，告诉我 pip 安装命令。"</p>
+                </div>
+                <pre><code class="language-bash">pip install fastapi uvicorn[standard]</code></pre>
+
+                <p><strong>第三步：编写主应用文件 <code>app/main.py</code></strong></p>
+                <p>这个文件是整个 FastAPI 应用的入口。它会创建 FastAPI 应用实例，并且把我们后面要写的“交通指挥员”（routers）包含进来。</p>
+                <div class="tip">
+                    <p><span class="emoji">💡</span> <strong>代码解释</strong>：下面的代码创建了一个 FastAPI 应用，并告诉它去 <code>app.routers.weather_router</code> 这个文件里找跟天气相关的网址路径。</p>
+                </div>
+                <div class="ai-prompt">
+                    <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "我想用 FastAPI 创建一个应用。请帮我写一个 <code>main.py</code> 文件，它能创建一个 FastAPI 实例，并且能把一个叫做 <code>weather_router.py</code> 文件里的网址路径包含进来。假设 <code>weather_router.py</code> 在 <code>app.routers</code> 文件夹下。"</p>
+                </div>
+                <pre><code class="language-python"># 文件: my_weather_app/app/main.py
+
+from fastapi import FastAPI
+from .routers import weather_router # 从同级目录的 routers 包导入 weather_router
+
+# 创建一个 FastAPI 的“总管家”实例
+app = FastAPI(title="我的天气应用MCP版")
+
+# 把天气相关的“交通指挥”工作交给 weather_router 来处理
+# prefix="/api/v1" 的意思是，所有 weather_router 里的网址都会自动加上 /api/v1 这个前缀
+# tags=["Weather"] 是给 API 文档里加个标签，方便查找
+app.include_router(weather_router.router, prefix="/api/v1/weather", tags=["Weather API"])
+
+# 你也可以在这里直接定义一些全局的接口，如果需要的话
+@app.get("/")
+async def read_root():
+    return {"message": "欢迎来到我的天气应用！请访问 /docs 查看 API 文档。"}
+
+# 如果你想直接运行这个 main.py (虽然通常我们会用 uvicorn 命令来运行)
+# 可以加上下面的代码，但对于 MCP 结构，更推荐在项目根目录用 uvicorn 启动
+# import uvicorn
+# if __name__ == "__main__":
+#     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+</code></pre>
+                <p>现在我们的架子初步搭好了！其他的文件 (<code>config.py</code>, <code>weather_schema.py</code>, <code>weather_service.py</code>, <code>weather_router.py</code>) 还是空的，我们将在下一站填充它们的内容来做一个真正的天气查询应用。</p>
+            </section>
+            <footer class="mt-12 pt-6 border-t border-gray-300 text-center text-sm text-gray-500">
+                <p><span class="emoji">🏗️</span> FastAPI 探险第二十一站完成！我们学会了给项目搭个整齐的“架子”！ <span class="emoji">🏗️</span></p>
+            </footer>
+        </section>
+        <hr class="section-divider">
+
+        <section id="lesson22-weather-mcp">
+            <h2><span class="emoji">🌦️</span>第二十二站: 实战！用 MCP 架构做个天气查询应用</h2>
+            <p>上一站我们搭好了 FastAPI MCP 项目的“骨架”，现在我们要往里面填充“血肉”，做一个能查询天气的小应用！</p>
+            <p>我们会用到一个免费的天气 API (比如 Open-Meteo，它不需要 API Key，很方便测试) 来获取真实的天气数据。当然，你也可以换成其他的天气服务。</p>
+            <div class="note">
+                <p><span class="emoji">⚙️</span> <strong>重要前提</strong>：这个例子会用到 <code>requests</code> 库来向外部天气 API 发送请求。如果你还没安装，请先安装它：</p>
+                <div class="ai-prompt" style="margin-top: 0.5em;">
+                     <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "我需要在 Python 里发 HTTP 请求，请告诉我怎么安装 requests 库。"</p>
+                </div>
+                <pre><code class="language-bash">pip install requests</code></pre>
+            </div>
+
+            <section id="weather-schemas">
+                <h3><span class="emoji">📝</span>22.1 定义“天气数据”长啥样：<code>app/schemas/weather_schema.py</code></h3>
+                <p>首先，我们要用 Pydantic 模型来定义我们期望从天气 API 获取的数据，以及我们想回复给客户端的数据应该是什么样的。这部分代码放在 <code>app/schemas/weather_schema.py</code> 文件里。</p>
+                <div class="tip">
+                    <p><span class="emoji">💡</span> <strong>代码解释</strong>：下面的代码定义了两个“数据蓝图”。<code>WeatherApiResponse</code> 描述了我们从外部天气服务那里可能收到的复杂数据中的一部分。<code>WeatherResponse</code> 则是我们最终想展示给用户看的、更简洁的天气信息。</p>
+                </div>
+                <div class="ai-prompt">
+                    <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "我想用 Pydantic 定义两个数据模型。第一个叫 <code>WeatherApiResponse</code>，它里面应该有一个叫 <code>current_weather</code> 的字段，这个字段本身也是一个字典，包含 <code>temperature</code> (数字) 和 <code>weathercode</code> (数字)。第二个模型叫 <code>WeatherResponse</code>，它应该有 <code>city</code> (字符串)、<code>temperature</code> (数字，摄氏度)、<code>weather_description</code> (字符串) 这几个字段。"</p>
+                </div>
+                <pre><code class="language-python"># 文件: my_weather_app/app/schemas/weather_schema.py
+
+from pydantic import BaseModel
+
+# 这个模型用来描述我们从 Open-Meteo API 可能收到的部分数据结构
+# 我们只关心 current_weather 里的 temperature 和 weathercode
+class CurrentWeather(BaseModel):
+    temperature: float
+    weathercode: int
+
+class WeatherApiResponse(BaseModel):
+    current_weather: CurrentWeather
+
+# 这是我们最终想回复给客户端的天气信息模型
+class WeatherResponse(BaseModel):
+    city: str
+    temperature_celsius: float
+    weather_description: str
+    source: str = "Open-Meteo" # 可以加一个数据来源字段
+</code></pre>
+            </section>
+
+            <section id="weather-config">
+                <h3><span class="emoji">⚙️</span>22.2 配置信息：<code>app/core/config.py</code></h3>
+                <p>如果我们的应用需要一些配置，比如第三方 API 的地址、API 密钥等，通常会把它们放在一个专门的配置文件里。这里我们放一个 Open-Meteo API 的基础网址。</p>
+                 <div class="tip">
+                    <p><span class="emoji">💡</span> <strong>代码解释</strong>：下面的代码定义了一个获取天气 API 基础网址的设置。</p>
+                </div>
+                <div class="ai-prompt">
+                    <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "我想在 FastAPI 项目的配置文件里设置一个天气 API 的基础网址，请帮我写一个 <code>config.py</code>，里面包含这个设置。"</p>
+                </div>
+                <pre><code class="language-python"># 文件: my_weather_app/app/core/config.py
+
+from pydantic_settings import BaseSettings # Pydantic V2 推荐用 pydantic-settings
+
+class Settings(BaseSettings):
+    OPEN_METEO_API_URL: str = "https://api.open-meteo.com/v1/forecast"
+    # 如果你有 API Key，也可以在这里定义，比如:
+    # WEATHER_API_KEY: str = "YOUR_SUPER_SECRET_API_KEY"
+
+    class Config:
+        env_file = ".env" # 可以让配置从 .env 文件加载，更安全
+        env_file_encoding = 'utf-8'
+
+settings = Settings() # 创建一个全局可用的配置实例
+</code></pre>
+                <div class="note">
+                    <p><span class="emoji">💡</span> 为了使用 <code>pydantic-settings</code>，你可能需要先安装它： <code>pip install pydantic-settings</code>。它可以方便地从环境变量或 <code>.env</code> 文件加载配置，让你的代码更安全、更灵活。</p>
+                </div>
+            </section>
+
+            <section id="weather-service">
+                <h3><span class="emoji">👨‍🔧</span>22.3 “天气预报员”：<code>app/services/weather_service.py</code></h3>
+                <p>这个文件里放的是真正干活的“工人”——天气服务逻辑。它会负责去调用外部的天气 API，获取数据，然后可能做一些处理，转换成我们想要的格式。</p>
+                 <div class="tip">
+                    <p><span class="emoji">💡</span> <strong>代码解释</strong>：下面的代码定义了一个函数 <code>get_weather_data</code>，它会根据城市名（通过经纬度）去一个天气网站请求数据，然后把拿到的温度和天气代码转换成我们容易理解的描述。</p>
+                </div>
+                <div class="ai-prompt">
+                    <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "帮我写一个 Python 函数，叫做 <code>get_weather_data</code>。它接收城市名作为参数。函数内部需要根据城市名查到对应的经纬度（这里可以先写死几个例子，比如北京、上海），然后用 <code>requests</code> 库去 Open-Meteo 的 API (网址是 <code>https://api.open-meteo.com/v1/forecast</code>) 请求这个经纬度的当前天气，参数要包含 <code>latitude</code>, <code>longitude</code>, 和 <code>current_weather=true</code>。拿到返回的 JSON 数据后，提取出温度和天气代码。最后，根据天气代码（比如0是晴天，1是少云等）返回一个包含城市名、温度（摄氏度）和天气描述的字典。"</p>
+                </div>
+                <pre><code class="language-python"># 文件: my_weather_app/app/services/weather_service.py
+
+import requests
+from ..schemas.weather_schema import WeatherApiResponse, WeatherResponse # 导入我们定义的数据模型
+from ..core.config import settings # 导入配置
+
+# 城市经纬度的一个简单映射，真实应用中可能需要更完善的地理编码服务
+CITY_COORDINATES = {
+    "北京": {"latitude": 39.9042, "longitude": 116.4074},
+    "上海": {"latitude": 31.2304, "longitude": 121.4737},
+    "广州": {"latitude": 23.1291, "longitude": 113.2644},
+    "深圳": {"latitude": 22.5431, "longitude": 114.0579},
+    "东京": {"latitude": 35.6895, "longitude": 139.6917},
+}
+
+# 天气代码到描述的简单映射 (来自 Open-Meteo 文档)
+WEATHER_CODES_DESCRIPTION = {
+    0: "晴朗",
+    1: "少云",
+    2: "局部多云",
+    3: "阴天",
+    45: "雾",
+    48: "冻雾",
+    51: "毛毛雨(弱)",
+    53: "毛毛雨(中)",
+    55: "毛毛雨(强)",
+    # ...可以添加更多天气代码...
+    61: "小雨",
+    63: "中雨",
+    65: "大雨",
+    80: "阵雨(弱)",
+    81: "阵雨(中)",
+    82: "阵雨(强)",
+}
+
+async def get_weather_data_for_city(city: str) -> WeatherResponse | None:
+    if city not in CITY_COORDINATES:
+        return None # 城市不在我们的列表里
+
+    coords = CITY_COORDINATES[city]
+    
+    params = {
+        "latitude": coords["latitude"],
+        "longitude": coords["longitude"],
+        "current_weather": "true" # 告诉 API 我们想要当前天气
+    }
+    
+    try:
+        # 发送 GET 请求到天气 API
+        response = requests.get(settings.OPEN_METEO_API_URL, params=params)
+        response.raise_for_status() # 如果请求失败 (比如4xx或5xx错误)，这里会抛出异常
+        
+        api_data = response.json()
+        
+        # 用 Pydantic 模型来校验和解析收到的数据
+        # 我们只关心 WeatherApiResponse 里定义的部分
+        parsed_api_data = WeatherApiResponse(**api_data)
+        
+        temperature = parsed_api_data.current_weather.temperature
+        weather_code = parsed_api_data.current_weather.weathercode
+        
+        weather_description = WEATHER_CODES_DESCRIPTION.get(weather_code, "未知天气代码")
+        
+        return WeatherResponse(
+            city=city,
+            temperature_celsius=temperature,
+            weather_description=weather_description
+        )
+        
+    except requests.exceptions.RequestException as e:
+        print(f"请求天气 API 出错: {e}")
+        return None
+    except Exception as e: # 捕获 Pydantic 校验错误或其他意外错误
+        print(f"处理天气数据出错: {e}")
+        return None
+
+</code></pre>
+            </section>
+
+            <section id="weather-router">
+                <h3><span class="emoji">🚦</span>22.4 “天气预报指挥中心”：<code>app/routers/weather_router.py</code></h3>
+                <p>这个文件是我们的“交通指挥员”。它定义了用户可以通过哪个网址来查询天气，以及当用户访问这个网址时，应该调用哪个“服务员”（业务逻辑函数）来处理。</p>
+                <div class="tip">
+                    <p><span class="emoji">💡</span> <strong>代码解释</strong>：下面的代码创建了一个 API 路径 <code>/query/{city}</code>。当用户访问比如 <code>/query/北京</code> 时，它会调用我们之前写的 <code>get_weather_data_for_city</code> 函数，并把查询到的天气信息（或者错误提示）返回给用户。</p>
+                </div>
+                <div class="ai-prompt">
+                    <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "我想用 FastAPI 创建一个获取城市天气的 API 接口。网址应该是 <code>/query/{city}</code>，其中 <code>city</code> 是路径参数，代表城市名。这个接口应该调用一个叫做 <code>get_weather_data_for_city</code> 的服务函数来获取天气数据。如果找到了天气，就返回 <code>WeatherResponse</code> 模型定义的数据；如果城市找不到或者出错了，就返回一个 404 错误，提示城市未找到或获取天气失败。"</p>
+                </div>
+                <pre><code class="language-python"># 文件: my_weather_app/app/routers/weather_router.py
+
+from fastapi import APIRouter, HTTPException, Path, Depends
+from typing import Annotated
+
+from ..services import weather_service # 从同级目录的 services 包导入 weather_service
+from ..schemas.weather_schema import WeatherResponse # 导入我们定义的响应模型
+
+# 创建一个 APIRouter 实例，就像是 FastAPI app 的一个“分身”
+# 专门用来管理和天气相关的网址路径
+router = APIRouter()
+
+@router.get(
+    "/query/{city}", # city 是路径参数
+    response_model=WeatherResponse, # 告诉 FastAPI，成功时返回的数据会是 WeatherResponse 的形状
+    summary="获取指定城市当前天气",
+    description="输入城市中文名，例如：北京、上海、东京"
+)
+async def get_city_weather(
+    city: Annotated[str, Path(description="要查询的城市名称，例如: 北京")]
+):
+    """
+    根据城市名称获取当前天气信息。
+    - **city**: 要查询的城市名称 (路径参数)。
+    """
+    weather_data = await weather_service.get_weather_data_for_city(city)
+    if weather_data is None:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"无法获取城市 '{city}' 的天气信息，请检查城市名称是否支持或稍后再试。"
+        )
+    return weather_data
+
+# 你还可以添加更多和天气相关的路由...
+</code></pre>
+            </section>
+
+            <section id="running-mcp-app">
+                <h3><span class="emoji">▶️</span>22.5 启动我们的 MCP 天气应用！</h3>
+                <p>所有“房间”的代码都写好后，我们怎么启动这个应用呢？</p>
+                <p>打开你的命令行工具，<strong>确保你在项目根目录 <code>my_weather_app</code> 下</strong> (不是在 <code>app</code> 文件夹里)，然后运行 Uvicorn：</p>
+                <div class="tip">
+                    <p><span class="emoji">💡</span> <strong>命令解释</strong>：<code>uvicorn app.main:app --reload</code></p>
+                    <ul>
+                        <li><code>app.main</code>: 告诉 Uvicorn 去 <code>app</code> 文件夹（包）下的 <code>main.py</code> 文件里找。</li>
+                        <li><code>:app</code>: 告诉 Uvicorn，在 <code>main.py</code> 文件里，那个 FastAPI 的实例变量名叫 <code>app</code>。</li>
+                        <li><code>--reload</code>: 这个参数非常有用！它会让服务器在你修改并保存代码后自动重启，不用你手动停掉再启动。开发的时候强烈推荐加上！</li>
+                    </ul>
+                </div>
+                 <div class="ai-prompt">
+                    <p><strong><span class="emoji">🤖</span> AI提示词</strong>： "我有一个 FastAPI 项目，主应用实例在 <code>app/main.py</code> 文件里的一个叫 <code>app</code> 的变量。请告诉我用 uvicorn 启动这个应用的命令，并且让它在代码改动后能自动重启。"</p>
+                </div>
+                <pre><code class="language-bash">uvicorn app.main:app --reload</code></pre>
+                <p>如果一切顺利，你应该会看到类似这样的输出：</p>
+                <div class="output">INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [xxxxx] using statreload
+INFO:     Started server process [xxxxx]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+</div>
+                <p>现在，打开你的浏览器，试试访问：</p>
+                <ul>
+                    <li><a href="http://127.0.0.1:8000/api/v1/weather/query/北京" target="_blank" class="text-blue-600 hover:underline">http://127.0.0.1:8000/api/v1/weather/query/北京</a></li>
+                    <li><a href="http://127.0.0.1:8000/api/v1/weather/query/东京" target="_blank" class="text-blue-600 hover:underline">http://127.0.0.1:8000/api/v1/weather/query/东京</a></li>
+                    <li>或者去 <a href="http://127.0.0.1:8000/docs" target="_blank" class="text-blue-600 hover:underline">http://127.0.0.1:8000/docs</a> 看看你的 API 文档，并通过文档界面来测试！</li>
+                </ul>
+                <p>如果看到返回的天气信息，恭喜你！你成功用 MCP 架构搭建并运行了一个 FastAPI 应用！</p>
+                <div class="note">
+                    <p><span class="emoji">🛠️</span> <strong>调试小技巧</strong>：</p>
+                    <ul>
+                        <li>如果在启动或运行时遇到 "ModuleNotFoundError" (找不到模块)，通常是因为你运行 <code>uvicorn</code> 命令的路径不对，或者你的文件夹结构、<code>__init__.py</code> 文件、导入语句 (比如 <code>from ..schemas import ...</code> 里的点点 <code>..</code>) 有问题。确保你是在项目根目录 (<code>my_weather_app</code>) 运行命令。</li>
+                        <li>仔细检查每个文件里的导入语句是不是正确指向了其他文件。</li>
+                        <li><code>print()</code> 语句是你调试的好朋友！可以在各个函数里加上打印输出来看看程序执行到了哪里，变量的值是什么。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <footer class="mt-12 pt-6 border-t border-gray-300 text-center text-sm text-gray-500">
+                <p><span class="emoji">🎉</span> FastAPI 探险第二十二站，也是本次 MCP 篇章的终点站，圆满完成！你太棒了！ <span class="emoji">🎉</span></p>
+                <p>通过这两站的学习，你不仅了解了 MCP 这种让代码更有条理的方法，还亲手做了一个能查天气的小应用！希望这次探险能让你对 FastAPI 有更深的理解，也对编程更有信心！</p>
+            </footer>
+        </section>
+        </div>
+</body>
+</html>
