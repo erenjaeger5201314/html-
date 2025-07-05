@@ -1,0 +1,2734 @@
+<!DOCTYPE html>
+<!-- 声明这是一个HTML5文档 -->
+<html lang="zh-CN">
+<!-- 设置页面语言为中文 -->
+<head>
+    <!-- 网页头部信息开始 -->
+    <meta charset="UTF-8">
+    <!-- 设置字符编码为UTF-8，支持中文显示 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 让网页在手机上也能正常显示 -->
+    <title>生命游戏（优化版）</title>
+    <!-- 网页标题，显示在浏览器标签页上 -->
+    <style>
+        /* CSS样式开始 - 让网页变得漂亮 */
+        :root {
+            /* 定义颜色变量，方便统一管理颜色 */
+            --primary-color: #3498db;    /* 主要颜色：蓝色 */
+            --secondary-color: #2980b9;  /* 次要颜色：深蓝色 */
+            --danger-color: #e74c3c;     /* 危险颜色：红色，用于活细胞 */
+            --success-color: #2ecc71;    /* 成功颜色：绿色 */
+            --warning-color: #f39c12;    /* 警告颜色：橙色 */
+            --info-color: #00ffff;       /* 信息颜色：青色 */
+            --light-text: #ecf0f1;       /* 浅色文字 */
+            --dark-bg: rgba(0, 0, 0, 0.1);    /* 深色半透明背景 */
+            --panel-bg: rgba(255, 255, 255, 0.1);  /* 面板半透明背景 */
+        }
+
+        * {
+            /* 重置所有元素的默认样式 */
+            box-sizing: border-box;  /* 让宽高计算包含边框和内边距 */
+            margin: 0;               /* 去掉默认外边距 */
+            padding: 0;              /* 去掉默认内边距 */
+        }
+
+        body {
+            /* 设置网页主体样式 */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* 使用系统默认字体，让文字更清晰 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* 设置渐变背景，从蓝色到紫色 */
+            color: var(--light-text);     /* 使用浅色文字 */
+            display: flex;                /* 使用弹性布局 */
+            flex-direction: column;       /* 垂直排列元素 */
+            align-items: center;          /* 水平居中对齐 */
+            padding: 8px;                 /* 四周留8像素空白 */
+            min-height: 100vh;            /* 最小高度为整个屏幕高度 */
+            overflow-x: hidden;           /* 隐藏水平滚动条 */
+        }
+
+        .container {
+            /* 主容器样式 */
+            width: 100%;          /* 宽度占满父元素 */
+            max-width: 1400px;    /* 最大宽度限制，避免在大屏幕上过宽 */
+            margin: 0 auto;       /* 水平居中 */
+        }
+
+        .header {
+            /* 页面头部样式 */
+            text-align: center;     /* 文字居中对齐 */
+            margin-bottom: 8px;     /* 底部留8像素空白 */
+        }
+
+        .header h1 {
+            /* 主标题样式 */
+            font-size: 2.5em;                        /* 字体大小为2.5倍 */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* 添加文字阴影效果 */
+        }
+
+        .panel {
+            /* 面板容器样式 - 用于包装各个功能区域 */
+            background: var(--panel-bg);              /* 半透明背景 */
+            backdrop-filter: blur(10px);              /* 背景模糊效果，让面板更有层次感 */
+            border-radius: 15px;                      /* 圆角边框 */
+            padding: 12px;                            /* 内边距12像素 */
+            margin-bottom: 12px;                      /* 底部外边距12像素 */
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);   /* 添加阴影效果 */
+            border: 1px solid rgba(255,255,255,0.18); /* 半透明白色边框 */
+        }
+        
+        .game-rules h3, .keyboard-shortcuts h3 {
+            /* 游戏规则和快捷键标题样式 */
+            text-align: center;    /* 文字居中 */
+            margin-bottom: 8px;    /* 底部留8像素空白 */
+            font-size: 1.1em;      /* 字体大小1.1倍 */
+            font-weight: 600;      /* 字体加粗 */
+        }
+
+        .rules-content {
+            /* 规则内容容器 */
+            display: grid;                                           /* 使用网格布局 */
+                                                                                                         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* 自动适应列数，每列最小280像素 */
+            gap: 12px;                                               /* 增加网格间距到12像素 */
+            margin-bottom: 20px;                                     /* 增加底部空白到20像素 */
+            padding: 0 8px;                                          /* 左右增加8像素内边距 */
+        }
+
+        .rule-item {
+            /* 单个规则项样式 */
+            display: flex;           /* 使用弹性布局 */
+            align-items: center;     /* 垂直居中对齐 */
+            gap: 12px;               /* 增加元素间距到12像素 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); /* 微妙渐变背景 */
+            padding: 14px 18px;      /* 增加内边距：上下14像素，左右18像素 */
+            border-radius: 12px;     /* 增加圆角到12像素 */
+            border: 1px solid rgba(255,255,255,0.1); /* 添加细微边框 */
+            backdrop-filter: blur(10px); /* 背景模糊效果 */
+            transition: all 0.3s ease; /* 平滑过渡动画 */
+        }
+
+        .rule-item:hover {
+            /* 鼠标悬停效果 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+            transform: translateY(-2px); /* 轻微上移 */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2); /* 增加阴影 */
+        }
+
+        .rule-item span:first-child {
+            /* 表情符号样式 */
+            font-size: 1.2em;       /* 稍微放大表情符号 */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); /* 添加阴影效果 */
+        }
+
+        .shortcuts-grid {
+            /* 快捷键网格容器 */
+            display: flex;            /* 使用弹性布局 */
+            flex-wrap: wrap;          /* 允许换行 */
+            justify-content: center;  /* 水平居中对齐 */
+            gap: 10px;                /* 元素间距10像素 */
+        }
+
+        .shortcut-item {
+            /* 单个快捷键项样式 */
+            display: flex;           /* 使用弹性布局 */
+            align-items: center;     /* 垂直居中对齐 */
+            gap: 8px;                /* 元素间距8像素 */
+            background: var(--dark-bg); /* 深色背景 */
+            padding: 8px 12px;       /* 内边距：上下8像素，左右12像素 */
+            border-radius: 20px;     /* 圆角边框 */
+        }
+
+        .shortcut-item kbd {
+            /* 快捷键按键样式 */
+            background: var(--secondary-color); /* 次要颜色背景 */
+            color: white;                       /* 白色文字 */
+            padding: 4px 8px;                   /* 内边距：上下4像素，左右8像素 */
+            border-radius: 6px;                 /* 圆角边框 */
+            font-size: 0.8em;                   /* 字体大小0.8倍 */
+            font-weight: bold;                  /* 字体加粗 */
+        }
+
+        .game-stats {
+            /* 游戏统计数据容器 */
+            display: grid;                                        /* 使用网格布局 */
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* 自动适应列数，每列最小120像素 */
+            gap: 15px;                                            /* 网格间距15像素 */
+            text-align: center;                                   /* 文字居中对齐 */
+        }
+
+        .stat-value {
+            /* 统计数值样式 */
+            font-size: 2em;                /* 字体大小2倍 */
+            font-weight: bold;             /* 字体加粗 */
+            color: var(--primary-color);   /* 主要颜色 */
+        }
+
+        .stat-label {
+            /* 统计标签样式 */
+            font-size: 0.9em;  /* 字体大小0.9倍 */
+            opacity: 0.8;       /* 透明度80% */
+        }
+
+        .grid-container {
+            /* 游戏网格容器 */
+            position: relative;        /* 相对定位，为子元素提供定位参考 */
+            display: flex;             /* 使用弹性布局 */
+            justify-content: center;   /* 水平居中对齐 */
+            min-height: 70vh;          /* 最小高度为视口高度的70% */
+            width: 100%;               /* 宽度100% */
+        }
+
+        .grid {
+            /* 游戏网格样式 */
+            display: grid;                        /* 使用网格布局 */
+            gap: 1px;                             /* 网格间距1像素 */
+            background-color: rgba(0,0,0,0.3);    /* 半透明黑色背景 */
+            border: 3px solid rgba(0,0,0,0.3);    /* 半透明黑色边框 */
+            border-radius: 10px;                  /* 圆角边框 */
+            position: relative;                   /* 相对定位 */
+        }
+
+        /* 无限画布样式 */
+        #infiniteCanvas {
+            position: absolute;      /* 绝对定位 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;     /* 圆角边框 */
+            cursor: grab;            /* 抓取光标 */
+            background-color: #1a202c; /* 深色背景 */
+        }
+        #infiniteCanvas:active {
+            cursor: grabbing;        /* 拖拽时的光标 */
+        }
+
+        /* 隐藏类 */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 不同模式下的网格边框颜色 */
+        .grid.drawing-mode { border-color: var(--warning-color); }  /* 绘图模式：橙色边框 */
+        .grid.running-mode { border-color: var(--danger-color); }   /* 🔴 游戏运行模式：红色边框 */
+        .grid.pasting-mode { cursor: copy; }                        /* 粘贴模式：复制光标 */
+
+        .cell {
+            /* 单个细胞样式 */
+            background-color: rgba(255, 255, 255, 0.1); /* 半透明白色背景（死细胞） */
+            border-radius: 2px;                         /* 小圆角 */
+            transition: background-color 0.3s ease, transform 0.1s ease; /* 平滑过渡动画 */
+        }
+
+        /* 细胞的不同状态 */
+        .cell.alive { background-color: var(--danger-color); }              /* 活细胞：红色 */
+        .cell.preview { background-color: rgba(46, 204, 113, 0.6) !important; } /* 预览状态：绿色 */
+        .cell:hover { transform: scale(1.2); z-index: 1; }                  /* 鼠标悬停：放大效果 */
+
+        .controls-panel { 
+            /* 控制面板容器 */
+            display: flex;           /* 使用弹性布局 */
+            flex-direction: column;  /* 垂直排列 */
+            gap: 15px;               /* 元素间距15像素 */
+        }
+        
+        .controls-row {
+            /* 控制按钮行容器 */
+            display: flex;            /* 使用弹性布局 */
+            justify-content: center;  /* 水平居中对齐 */
+            align-items: center;      /* 垂直居中对齐 */
+            gap: 8px;                 /* 元素间距8像素 */
+            flex-wrap: wrap;          /* 允许换行 */
+            margin-bottom: 8px;       /* 行间距8像素 */
+        }
+        
+        .btn {
+            /* 按钮基础样式 */
+            background: var(--primary-color);        /* 主要颜色背景 */
+            color: white;                            /* 白色文字 */
+            border: none;                            /* 无边框 */
+            padding: 6px 12px;                       /* 内边距：上下6像素，左右12像素 */
+            border-radius: 20px;                     /* 圆角边框 */
+            cursor: pointer;                         /* 鼠标指针样式 */
+            font-size: 0.85em;                       /* 字体大小0.85倍 */
+            font-weight: 600;                        /* 字体加粗 */
+            transition: all 0.3s ease;               /* 所有属性平滑过渡 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);  /* 阴影效果 */
+        }
+        /* 按钮悬停效果 */
+        .btn:hover:not(:disabled) { 
+            transform: translateY(-2px);              /* 向上移动2像素 */
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);  /* 增强阴影效果 */
+        }
+        /* 按钮禁用状态 */
+        .btn:disabled { 
+            background: #95a5a6;  /* 灰色背景 */
+            cursor: not-allowed;   /* 禁止光标 */
+        }
+        /* 不同类型按钮的颜色 */
+        .btn.danger { background: var(--danger-color); }   /* 危险按钮：红色 */
+        .btn.success { background: var(--success-color); } /* 成功按钮：绿色 */
+        .btn.warning { background: var(--warning-color); } /* 警告按钮：橙色 */
+
+        .input-group { 
+            /* 输入组件容器 */
+            display: flex;        /* 使用弹性布局 */
+            align-items: center;  /* 垂直居中对齐 */
+            gap: 8px;             /* 元素间距8像素 */
+        }
+        .input-group input, .input-group select {
+            /* 输入框和下拉框样式 */
+            padding: 4px 8px;                       /* 内边距：上下4像素，左右8像素 */
+            border-radius: 15px;                    /* 圆角边框 */
+            border: 2px solid rgba(255,255,255,0.3); /* 半透明白色边框 */
+            background: var(--panel-bg);            /* 面板背景色 */
+            color: white;                           /* 白色文字 */
+            font-size: 13px;                        /* 字体大小13像素 */
+        }
+        .input-group select { 
+            /* 下拉框特殊样式 */
+            appearance: none;  /* 移除默认样式 */
+            /* 添加自定义下拉箭头图标 */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="white" d="M6 8L0 0h12z"/></svg>'); 
+            background-repeat: no-repeat;     /* 不重复背景图 */
+            background-position: right 12px center; /* 图标位置 */
+            padding-right: 35px;              /* 右侧留空间给箭头 */
+        }
+        .input-group select option { 
+            /* 下拉选项样式 */
+            background-color: #2c3e50;  /* 深色背景 */
+            color: white;                /* 白色文字 */
+        }
+        
+        .category-tabs { 
+            /* 分类标签容器 */
+            display: flex;            /* 使用弹性布局 */
+            justify-content: center;  /* 水平居中对齐 */
+            gap: 6px;                 /* 元素间距6像素 */
+            margin-bottom: 8px;       /* 底部留8像素空白 */
+            flex-wrap: wrap;          /* 允许换行 */
+        }
+        .category-tab {
+            /* 单个分类标签样式 */
+            background: var(--dark-bg);          /* 深色背景 */
+            padding: 4px 8px;                    /* 内边距：上下4像素，左右8像素 */
+            border-radius: 15px;                 /* 圆角边框 */
+            cursor: pointer;                     /* 鼠标指针样式 */
+            border: 1px solid transparent;       /* 透明边框 */
+            transition: all 0.3s ease;           /* 所有属性平滑过渡 */
+        }
+        .category-tab.active { 
+            /* 激活状态的分类标签 */
+            background: var(--primary-color);  /* 主要颜色背景 */
+            border-color: var(--light-text);   /* 浅色边框 */
+        }
+        
+        .pattern-grid {
+            /* 图案网格容器 */
+            display: grid;                                        /* 使用网格布局 */
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* 增加每列最小宽度到130像素 */
+            gap: 16px;                                            /* 增加网格间距到16像素 */
+            max-height: 280px;                                    /* 增加最大高度到280像素 */
+            overflow-y: auto;                                     /* 垂直滚动 */
+            padding: 12px;                                        /* 增加内边距到12像素 */
+            /* 自定义滚动条样式 */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+        }
+        
+        /* 美化滚动条 */
+        .pattern-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .pattern-grid::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+        .pattern-grid::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        .pattern-grid::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .pattern-card {
+            /* 图案卡片样式 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); /* 微妙渐变背景 */
+            padding: 14px;                   /* 增加内边距到14像素 */
+            border-radius: 14px;             /* 增加圆角到14像素 */
+            border: 1px solid rgba(255,255,255,0.15); /* 添加细微边框 */
+            backdrop-filter: blur(10px);     /* 背景模糊效果 */
+            cursor: grab;                    /* 抓取光标，表示可拖拽 */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 更流畅的过渡动画 */
+            text-align: center;              /* 文字居中对齐 */
+            display: flex;                   /* 使用弹性布局 */
+            flex-direction: column;          /* 垂直排列 */
+            justify-content: space-between;  /* 两端对齐 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* 添加柔和阴影 */
+        }
+        .pattern-card:hover { 
+            /* 图案卡片悬停效果 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08)); /* 更亮的渐变背景 */
+            transform: translateY(-4px) scale(1.02); /* 向上移动并轻微放大 */
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2); /* 增强阴影效果 */
+            border-color: rgba(255,255,255,0.25); /* 增强边框颜色 */
+        }
+        .pattern-card.dragging { 
+            /* 拖拽中的图案卡片 */
+            opacity: 0.7;  /* 调整透明度 */
+            transform: rotate(5deg) scale(1.05); /* 添加旋转和放大效果 */
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3); /* 增强拖拽时的阴影 */
+        }
+        
+        .pattern-preview {
+            /* 图案预览容器 */
+            width: 55px;                      /* 增加宽度到55像素 */
+            height: 55px;                     /* 增加高度到55像素 */
+            margin: 0 auto 10px;              /* 水平居中，增加底部空白到10像素 */
+            display: grid;                    /* 使用网格布局 */
+            gap: 1.5px;                       /* 增加网格间距到1.5像素 */
+            background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2)); /* 渐变背景 */
+            border: 1px solid rgba(255,255,255,0.15); /* 添加边框 */
+            border-radius: 8px;               /* 增加圆角到8像素 */
+            backdrop-filter: blur(3px);       /* 轻微背景模糊 */
+            transition: all 0.2s ease;        /* 添加过渡动画 */
+        }
+        .pattern-preview .mini-cell { 
+            /* 预览中的小细胞样式 */
+            background: rgba(255,255,255,0.25); /* 调整死细胞背景透明度 */
+            border-radius: 2px;                /* 增加小圆角到2像素 */
+            transition: all 0.15s ease;        /* 添加过渡动画 */
+        }
+        .pattern-preview .mini-cell.alive { 
+            /* 预览中的活细胞样式 */
+            background: linear-gradient(135deg, var(--danger-color), #ff6b6b); /* 渐变红色背景 */
+            box-shadow: 0 0 4px rgba(255, 107, 107, 0.5); /* 添加发光效果 */
+        }
+        .pattern-card:hover .pattern-preview {
+            /* 卡片悬停时预览容器效果 */
+            background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3));
+            border-color: rgba(255,255,255,0.25);
+            transform: scale(1.05);
+        }
+        .pattern-name { 
+            /* 图案名称样式 */
+            font-size: 0.85em;                /* 稍微增加字体大小 */
+            margin-bottom: 10px;               /* 增加底部空白到10像素 */
+            color: rgba(255,255,255,0.95);    /* 更明亮的文字颜色 */
+            font-weight: 600;                  /* 增加字体粗细 */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* 添加文字阴影 */
+            letter-spacing: 0.3px;             /* 增加字母间距 */
+        }
+
+        .pattern-actions { 
+            /* 图案操作按钮容器 */
+            display: flex;                /* 使用弹性布局 */
+            justify-content: space-around; /* 均匀分布 */
+            gap: 8px;                     /* 添加按钮间距 */
+            margin-top: 4px;              /* 添加顶部间距 */
+        }
+        .pattern-action-btn {
+            /* 图案操作按钮样式 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)); /* 渐变背景 */
+            border: 1px solid rgba(255,255,255,0.25); /* 增强边框 */
+            color: var(--light-text);                /* 浅色文字 */
+            width: 32px;                             /* 增加宽度到32像素 */
+            height: 32px;                            /* 增加高度到32像素 */
+            border-radius: 50%;                      /* 圆形按钮 */
+            cursor: pointer;                         /* 鼠标指针样式 */
+            font-size: 14px;                         /* 调整字体大小到14像素 */
+            line-height: 32px;                       /* 调整行高到32像素，垂直居中 */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 更流畅的过渡动画 */
+            backdrop-filter: blur(5px);              /* 背景模糊效果 */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);   /* 添加阴影 */
+            display: flex;                           /* 使用弹性布局 */
+            align-items: center;                     /* 垂直居中 */
+            justify-content: center;                 /* 水平居中 */
+        }
+        .pattern-action-btn:hover { 
+            /* 图案操作按钮悬停效果 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)); /* 更亮的渐变背景 */
+            border-color: rgba(255,255,255,0.4);     /* 增强边框颜色 */
+            transform: translateY(-2px) scale(1.1);  /* 向上移动并放大 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);  /* 增强阴影效果 */
+        }
+        .pattern-action-btn:active {
+            /* 图案操作按钮点击效果 */
+            transform: translateY(0) scale(0.95);    /* 按下效果 */
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);  /* 减弱阴影 */
+        }
+
+        .ghost-preview {
+            /* 拖拽时的幽灵预览效果 */
+            position: fixed;                    /* 固定定位 */
+            pointer-events: none;               /* 不响应鼠标事件 */
+            z-index: 9999;                      /* 最高层级 */
+            opacity: 0.75;                      /* 75%透明度 */
+            transform: translate(-50%, -50%);   /* 居中对齐 */
+        }
+        .ghost-preview .pattern-preview {
+            /* 幽灵预览中的图案预览 */
+            transform-origin: center center;  /* 变换原点为中心 */
+        }
+        
+        /* --- 增强功能：选择和高亮样式 --- */
+        .selection-box {
+            /* 选择框样式 */
+            position: absolute;                  /* 绝对定位 */
+            border: 2px dashed var(--info-color); /* 青色虚线边框 */
+            pointer-events: none;                /* 不响应鼠标事件 */
+            z-index: 10;                         /* 较高层级 */
+            background: rgba(0, 255, 255, 0.1);  /* 半透明青色背景 */
+            overflow: hidden;                    /* 隐藏溢出的高亮细胞 */
+        }
+        .highlight-cell {
+            /* 高亮细胞样式 */
+            position: absolute;                 /* 绝对定位 */
+            background-color: var(--danger-color); /* 红色背景 */
+            border-radius: 2px;                 /* 小圆角 */
+            opacity: 0.9;                       /* 90%透明度 */
+        }
+        /* --- 增强功能结束 --- */
+
+        #contextMenu {
+            /* 右键上下文菜单容器 */
+            position: fixed;        /* 固定定位 */
+            z-index: 10000;         /* 最高层级 */
+            width: 120px;           /* 宽度120像素 */
+            height: 120px;          /* 高度120像素 */
+            pointer-events: none;   /* 默认不响应鼠标事件 */
+            display: none;          /* 默认隐藏 */
+        }
+
+        #contextMenu.show { 
+            /* 显示状态的右键菜单 */
+            display: block;  /* 显示菜单 */
+        }
+
+        .context-menu-item {
+            /* 右键菜单项样式 */
+            position: absolute;                     /* 绝对定位 */
+            width: 40px;                           /* 宽度40像素 */
+            height: 40px;                          /* 高度40像素 */
+            background-color: rgba(44, 62, 80, 0.85); /* 半透明深蓝背景 */
+            backdrop-filter: blur(5px);            /* 背景模糊效果 */
+            border: 1px solid var(--light-text);   /* 浅色边框 */
+            border-radius: 50%;                    /* 圆形 */
+            display: flex;                         /* 弹性布局 */
+            align-items: center;                   /* 垂直居中 */
+            justify-content: center;               /* 水平居中 */
+            color: white;                          /* 白色文字 */
+            cursor: pointer;                       /* 鼠标指针样式 */
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28), background-color 0.2s; /* 平滑过渡动画 */
+            pointer-events: all;                   /* 响应鼠标事件 */
+            font-size: 20px;                       /* 字体大小20像素 */
+        }
+
+        .context-menu-item:hover {
+            /* 右键菜单项悬停效果 */
+            background-color: var(--primary-color); /* 主色背景 */
+            transform: scale(1.15) !important;      /* 放大1.15倍 */
+        }
+
+        /* 右键菜单项的圆形排列位置 */
+        #contextMenu.show .menu-item-1 { 
+            /* 第1个菜单项：正上方 */
+            transform: translateY(-55px); 
+        }
+        #contextMenu.show .menu-item-2 { 
+            /* 第2个菜单项：72度位置 */
+            transform: rotate(72deg) translateY(-55px) rotate(-72deg); 
+        }
+        #contextMenu.show .menu-item-3 { 
+            /* 第3个菜单项：144度位置 */
+            transform: rotate(144deg) translateY(-55px) rotate(-144deg); 
+        }
+        #contextMenu.show .menu-item-4 { 
+            /* 第4个菜单项：216度位置 */
+            transform: rotate(216deg) translateY(-55px) rotate(-216deg); 
+        }
+        #contextMenu.show .menu-item-5 { 
+            /* 第5个菜单项：288度位置 */
+            transform: rotate(288deg) translateY(-55px) rotate(-288deg); 
+        }
+        #contextMenu.show .menu-item-6 { 
+            /* 第6个菜单项：360度位置（正下方） */
+            transform: rotate(180deg) translateY(-55px) rotate(-180deg); 
+        }
+
+        #saveModal {
+            /* 保存模态框样式 */
+            display: none;                    /* 默认隐藏 */
+            position: fixed;                  /* 固定定位 */
+            top: 0;                          /* 顶部对齐 */
+            left: 0;                         /* 左侧对齐 */
+            width: 100%;                     /* 全屏宽度 */
+            height: 100%;                    /* 全屏高度 */
+            background: rgba(0,0,0,0.8);     /* 半透明黑色背景 */
+            z-index: 1000;                   /* 高层级 */
+            justify-content: center;         /* 水平居中 */
+            align-items: center;             /* 垂直居中 */
+        }
+        #saveModal.show { 
+            /* 显示状态的模态框 */
+            display: flex;  /* 弹性布局显示 */
+        }
+        .modal-content {
+            /* 模态框内容区域 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 渐变背景 */
+            padding: 30px;                   /* 内边距30像素 */
+            border-radius: 15px;             /* 圆角15像素 */
+            max-width: 500px;                /* 最大宽度500像素 */
+            width: 90%;                      /* 宽度90% */
+            position: relative;              /* 相对定位 */
+        }
+        .modal-content .close { 
+            /* 模态框关闭按钮 */
+            position: absolute;  /* 绝对定位 */
+            top: 10px;          /* 距顶部10像素 */
+            right: 15px;        /* 距右侧15像素 */
+            font-size: 28px;    /* 字体大小28像素 */
+            cursor: pointer;    /* 鼠标指针样式 */
+        }
+        #savedStatesList { 
+            /* 保存状态列表 */
+            max-height: 200px;   /* 最大高度200像素 */
+            overflow-y: auto;    /* 垂直滚动 */
+            margin-top: 15px;    /* 顶部外边距15像素 */
+        }
+
+        .toast {
+            /* 提示框样式 */
+            position: fixed;                 /* 固定定位 */
+            top: 20px;                      /* 距顶部20像素 */
+            right: 20px;                    /* 距右侧20像素 */
+            background: var(--success-color); /* 成功色背景 */
+            color: white;                   /* 白色文字 */
+            padding: 15px 20px;             /* 内边距 */
+            border-radius: 10px;            /* 圆角10像素 */
+            z-index: 1001;                  /* 最高层级 */
+            transform: translateX(120%);    /* 初始位置在右侧外 */
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* 弹性动画 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* 阴影效果 */
+        }
+        .toast.show { 
+            /* 显示状态的提示框 */
+            transform: translateX(0);  /* 滑入到正常位置 */
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面主体开始 -->
+    <div class="container">
+        <!-- 页面头部 -->
+        <header class="header">
+            <h1>🧬 生命游戏</h1>  <!-- 游戏标题 -->
+            <p>探索细胞自动机的演化奥秘</p>  <!-- 游戏副标题 -->
+        </header>
+
+        <!-- 游戏规则面板 -->
+        <div class="panel game-rules">
+            <h3>🎮 游戏规则</h3>  <!-- 规则标题 -->
+            <div class="rules-content">
+                <!-- 童趣化的游戏规则说明 -->
+                <div class="rule-item"><span>🎯</span><span><b>怎么玩:</b> 点击小格子创造生命，拖拽鼠标画出图案，或者选择下面的预设图案快速开始冒险！</span></div>
+                <div id="rule-survival" class="rule-item"><span>❤️</span><span><b>生命存活:</b> 小生命身边有2-3个好朋友时会继续快乐生活。</span></div>
+                <div id="rule-birth" class="rule-item"><span>🌱</span><span><b>新生命诞生:</b> 空格子周围正好有3个生命朋友时，会诞生一个新的小生命！</span></div>
+            </div>
+        </div>
+
+        <!-- 游戏统计面板 -->
+        <div class="panel">
+             <div class="game-stats" id="statsPanel">
+                <!-- 世代数统计 -->
+                <div><div class="stat-value" id="generation">0</div><div class="stat-label">世代</div></div>
+                <!-- 活细胞数统计 -->
+                <div><div class="stat-value" id="population">0</div><div class="stat-label">活细胞</div></div>
+                <!-- 最大种群数统计 -->
+                <div><div class="stat-value" id="maxPopulation">0</div><div class="stat-label">最大种群</div></div>
+                <!-- 最大种群代数统计 -->
+                <div><div class="stat-value" id="maxPopulationGeneration">0</div><div class="stat-label">最大种群代</div></div>
+            </div>
+        </div>
+
+        <!-- 图案库面板 -->
+        <div class="panel patterns-panel">
+            <h3>🎨 图案库 (可拖拽)</h3>  <!-- 图案库标题 -->
+            <div class="category-tabs" id="categoryTabs"></div>  <!-- 分类标签容器 -->
+        <div class="pattern-grid" id="patternGrid"></div>  <!-- 图案网格容器 -->
+        </div>
+
+        <!-- 游戏网格容器 -->
+        <div class="grid-container" id="gridContainer">
+            <div id="grid" class="grid"></div>  <!-- 主游戏网格 -->
+            <canvas id="infiniteCanvas" class="hidden"></canvas>  <!-- 无限模式画布 -->
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="panel controls-panel">
+            <!-- 第一行控制按钮 -->
+            <div class="controls-row">
+                <button id="playPauseBtn" class="btn success">▶️ 开始</button>  <!-- 开始/暂停按钮 -->
+                <button id="stepBtn" class="btn">⏭️ 单步</button>  <!-- 单步执行按钮 -->
+                <button id="undoBtn" class="btn">⏪ 撤销</button>  <!-- 撤销按钮 -->
+                <button id="resetBtn" class="btn danger">🔄 重置</button>  <!-- 重置按钮 -->
+                <button id="randomBtn" class="btn">🎲 随机</button>  <!-- 随机生成按钮 -->
+            </div>
+            <!-- 第二行控制组件 -->
+            <div class="controls-row">
+                 <!-- 速度控制组 -->
+                 <div class="input-group">
+                    <label for="speed">速度:</label>  <!-- 速度标签 -->
+                    <input type="range" id="speed" min="1" max="100" value="5" step="1">  <!-- 速度滑块：1-100世代/秒 -->
+                    <span id="speedValue">5 世代/秒</span>  <!-- 速度显示值：世代/秒 -->
+                </div>
+                <!-- 网格大小选择组 -->
+                <div class="input-group">
+                    <label for="gridSize">网格空间:</label>  <!-- 网格空间标签 -->
+                    <select id="gridSize">  <!-- 大小下拉选择 -->
+                        <option value="30,50,false">无界小 (30x50)</option>  <!-- 无界小尺寸选项 -->
+                        <option value="30,50,true">有界小 (30x50)</option>  <!-- 有界小尺寸选项 -->
+                        <option value="60,80,false">无界中 (60x80)</option>  <!-- 无界中尺寸选项 -->
+                        <option value="60,80,true">有界中 (60x80)</option>  <!-- 有界中尺寸选项 -->
+                        <option value="80,100,false" selected>无界大 (80x100)</option>  <!-- 无界大尺寸选项（默认） -->
+                        <option value="80,100,true">有界大 (80x100)</option>  <!-- 有界大尺寸选项 -->
+                        <option value="infinite,,">🌌 无限宇宙</option>  <!-- 无限宇宙选项 -->
+                    </select>
+                </div>
+            </div>
+            <!-- 第三行功能按钮 -->
+            <div class="controls-row">
+                <button id="drawModeBtn" class="btn">✏️ 绘图</button>  <!-- 绘图模式按钮 -->
+                <button id="saveBtn" class="btn">💾 存档</button>  <!-- 保存按钮 -->
+                <button id="loadBtn" class="btn">📁 读档</button>  <!-- 加载按钮 -->
+                <button id="exportBtn" class="btn">📤 导出</button>  <!-- 导出按钮 -->
+                <button id="fullscreenBtn" class="btn">🔍 全屏</button>  <!-- 全屏按钮 -->
+            </div>
+            <!-- 第四行自定义规则 -->
+            <div class="controls-row">
+                <div class="input-group">
+                    <label for="ruleS">存活 (S):</label>
+                    <input type="text" id="ruleS" value="23" title="一个细胞要存活，周围需要有多少个邻居 (例如: 23)" maxlength="8">
+                </div>
+                <div class="input-group">
+                    <label for="ruleB">诞生 (B):</label>
+                    <input type="text" id="ruleB" value="3" title="一个死细胞要复活，周围需要有多少个邻居 (例如: 3)" maxlength="8">
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷键面板 -->
+        <div class="panel keyboard-shortcuts">
+             <h3>⌨️ 快捷鍵</h3>  <!-- 快捷键标题 -->
+             <div class="shortcuts-grid">
+                <!-- 各种快捷键说明 -->
+                <div class="shortcut-item"><kbd>空格</kbd><span>开始/暂停</span></div>  <!-- 空格键：开始/暂停 -->
+                <div class="shortcut-item"><kbd>C</kbd><span>清空</span></div>  <!-- C键：清空 -->
+                <div class="shortcut-item"><kbd>R</kbd><span>随机</span></div>  <!-- R键：随机 -->
+                <div class="shortcut-item"><kbd>→</kbd><span>单步</span></div>  <!-- 右箭头：单步 -->
+                <div class="shortcut-item"><kbd>←</kbd><span>撤销</span></div>  <!-- 左箭头：撤销 -->
+                <div class="shortcut-item"><kbd>↑</kbd><span>减速</span></div>  <!-- 上箭头：减速 -->
+                <div class="shortcut-item"><kbd>↓</kbd><span>加速</span></div>  <!-- 下箭头：加速 -->
+                
+             </div>
+        </div>
+    </div>
+
+    <!-- 保存游戏状态的模态框 -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>  <!-- 关闭按钮 -->
+            <h3>管理游戏状态</h3>  <!-- 模态框标题 -->
+            <!-- 保存输入组 -->
+            <div class="input-group" style="margin: 20px 0;">
+                <input type="text" id="saveName" placeholder="输入存档名称...">  <!-- 存档名称输入框 -->
+                <button id="confirmSave" class="btn success">保存当前状态</button>  <!-- 确认保存按钮 -->
+            </div>
+            <div id="savedStatesList"></div>  <!-- 已保存状态列表容器 -->
+        </div>
+    </div>
+    
+    <!-- 右键上下文菜单 -->
+    <div id="contextMenu">
+        <div class="context-menu-item menu-item-1" data-action="copy" title="复制">📝</div>  <!-- 复制操作 -->
+        <div class="context-menu-item menu-item-2" data-action="pan" title="平移">🖐️</div>  <!-- 平移操作 -->
+        <div class="context-menu-item menu-item-3" data-action="rotate" title="旋转 (↺)">↻</div>  <!-- 旋转操作 -->
+        <div class="context-menu-item menu-item-4" data-action="flip-h" title="水平翻转">↔️</div>  <!-- 水平翻转操作 -->
+        <div class="context-menu-item menu-item-5" data-action="flip-v" title="垂直翻转">↕️</div>  <!-- 垂直翻转操作 -->
+        <div class="context-menu-item menu-item-6" data-action="delete" title="删除选中区域">🗑️</div>  <!-- 删除操作 -->
+    </div>
+    
+    <script>
+    // JavaScript代码开始
+    
+    // --- 修复：恢复完整的图案库 ---
+    // 定义所有可用的生命游戏图案数据
+    let PATTERNS_DATA = {
+        '滑翔机': { pattern: [[0,1,0],[0,0,1],[1,1,1]], category: 'spaceship', description: '最经典的移动图案，会沿对角线移动' },
+        '轻量级飞船': { pattern: [[1,0,0,1,0],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,1]], category: 'spaceship', description: '轻量级太空飞船，水平移动' },
+        '双子飞船': { pattern: [[0,0,0,0,0,0,1,0],[0,1,0,0,0,0,0,1],[0,1,0,0,0,0,0,1],[0,1,0,1,1,1,1,1],[0,0,0,0,0,0,0,0],[0,0,1,1,0,0,0,0],[1,0,0,0,0,1,0,0],[0,0,0,0,0,0,1,0],[1,0,0,0,0,0,1,0],[0,1,1,1,1,1,1,0]], category: 'spaceship', description: '复杂的双子飞船图案' },
+        '甲壳虫': { pattern: [[0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,1,1,0,0,0],[0,0,1,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,1,1,0,0,0],[0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0],[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0],[1,0,0,1,1,0,1,1,1,0,0,0,1,0,0,0,1,1,0,1,1,0,0],[0,0,0,1,0,0,0,1,0,0,1,1,0,0,1,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0],[0,0,0,0,0,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1],[0,0,0,0,0,1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]], category: 'spaceship', description: '甲壳虫太空飞船' },
+        '青蛙': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,1,0,1,0,0,0,0,1,1,0],[0,0,0,0,0,1,0,0,0,1,0,0,0,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,0],[1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,1,1,0,0,1],[1,1,0,0,0,1,0,1,1,0,0,0,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,0,0],[1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,1,0],[0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0],[0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],[1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,1,0],[1,1,0,0,0,1,0,1,1,0,0,0,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,0,0],[1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,1,1,0,0,1],[0,0,0,0,0,1,0,0,0,1,0,0,0,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,1,0,1,0,0,0,0,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], category: 'spaceship', description: '一个名为“青蛙#N Dragon”的移动图案' },
+        '飞虫': { pattern: [[0,0,0,0,1,1,1,1,1,1],[0,0,1,1,0,0,0,0,0,1],[1,1,0,1,0,0,0,0,0,1],[0,0,0,0,1,0,0,0,1,0],[0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,1,1,0,0],[0,0,0,0,0,1,1,1,1,0],[0,0,0,0,0,1,1,0,1,1],[0,0,0,0,0,0,0,1,1,0]], category: 'spaceship', description: '飞虫太空飞船，一个小型的移动图案' },
+        '太空战队': { pattern: [[0,1,0,0,1,0,0,0,0,0,1,1,0,0],[1,0,0,0,0,0,0,0,0,1,1,1,1,0],[1,0,0,0,1,0,0,0,1,1,0,1,1,0],[1,1,1,1,0,0,0,0,0,1,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,0,1,1,1,0,0,0,0,0,0,0,1,1],[0,0,1,0,0,0,0,0,0,1,0,0,1,0],[0,0,1,0,1,0,0,0,0,0,0,1,0,0],[0,0,0,1,1,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,1,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,0,0,1,0,0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0,0,0,0,0,0,0]], category: 'spaceship', description: '太空战队，一个紧凑型的对称移动图案' },
+        '轰炸机': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1],[0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,1,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],[0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,1,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],[0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0],[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], category: 'spaceship', description: '轰炸机太空飞船' },
+        '巨大战甲': { pattern: [[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0],[0,1,1,0,1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,1,0,1,1,0],[0,1,1,0,0,1,0,0,0,0,0,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,1,1,0],[1,0,0,1,0,0,0,0,0,0,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,0,1,0,0,1],[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,1,0,0,0,1,1,0,1,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,0,1,0,1,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,0,1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,1,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], category: 'spaceship', description: '巨大战甲，一个超大型的复杂对称移动图案' },
+        '杠铃': { pattern: [[0,0,1,0,0,0,0,1,0,0],[1,1,0,1,1,1,1,0,1,1],[0,0,1,0,0,0,0,1,0,0]], category: 'oscillator', description: '杠铃振荡器' },
+        '双蜂穿梭': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]], category: 'oscillator', description: '双蜂穿梭振荡器' },
+        '八字形': { pattern: [[1,1,0,0,0,0],[1,1,0,1,0,0],[0,0,0,0,1,0],[0,1,0,0,0,0],[0,0,1,0,1,1],[0,0,0,0,1,1]], category: 'oscillator', description: '八字形振荡器' },
+        '脉冲星': { pattern: [[0,0,1,1,1,0,0,0,1,1,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,1,0,1,0,0,0,0,1],[1,0,0,0,0,1,0,1,0,0,0,0,1],[1,0,0,0,0,1,0,1,0,0,0,0,1],[0,0,1,1,1,0,0,0,1,1,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,1,0,0,0,1,1,1,0,0],[1,0,0,0,0,1,0,1,0,0,0,0,1],[1,0,0,0,0,1,0,1,0,0,0,0,1],[1,0,0,0,0,1,0,1,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,1,0,0,0,1,1,1,0,0]], category: 'oscillator', description: '三周期脉冲振荡器，非常壮观' },
+        '花瓣': { pattern: [[0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0]], category: 'oscillator', description: '花瓣振荡器' },
+        '开眼': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,1,1,0,0,1,0,0,0,0,1,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,1],[0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0]], category: 'oscillator', description: '开眼振荡器' },
+        '时钟': { pattern: [[0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,1,1,0,1,0,0,0,0,1,1,0,0,0],[0,0,1,0,0,1,0,1,0,1,0,0,0,0,0,1,0,0,0,0],[0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0],[1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0],[0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,1,1],[0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,0,0],[0,0,0,0,1,0,0,0,0,0,1,0,1,0,1,0,0,1,0,0],[0,0,0,1,1,0,0,0,0,1,0,1,1,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]], category: 'oscillator', description: '时钟振荡器' },
+        '穿梭机': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0],[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],[1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1],[0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1],[1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1],[0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0],[1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1],[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1],[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],[0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0],[0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], category: 'oscillator', description: '穿梭机振荡器' },
+        '包围': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], category: 'oscillator', description: '包围振荡器' },
+        '银河系': { pattern: [[1,1,0,1,1,0,1,1],[1,1,0,1,1,0,1,1],[0,0,0,0,0,0,0,0],[1,1,0,1,1,0,1,1],[1,1,0,1,1,0,1,1],[0,0,0,0,0,0,0,0],[1,1,0,1,1,0,1,1],[1,1,0,1,1,0,1,1]], category: 'static', description: '银河系图案，复杂而美丽的静物' },
+        '鹿角': { pattern: [[1,1,0,0,0,0,0,1,1],[1,0,0,0,0,0,0,0,1],[0,1,1,1,0,1,1,1,0],[0,0,0,1,0,1,0,0,0],[0,0,0,0,1,0,0,0,0]], category: 'static', description: '鹿角图案，像鹿角一样的静物' },
+        '双面包': { pattern: [[0,1,0,0,0,0,0],[1,0,1,0,0,0,0],[1,0,0,1,0,0,0],[0,1,1,0,1,0,0],[0,0,0,1,0,1,0],[0,0,0,1,0,0,1],[0,0,0,0,1,1,0]], category: 'static', description: '双面包图案，两个面包的组合静物' },
+        '长船': { pattern: [[1,1,0,0,0],[1,0,1,0,0],[0,1,0,1,0],[0,0,1,0,1],[0,0,0,1,1]], category: 'static', description: '长船图案，加长版的船形静物' },
+        '1103代': { pattern: [[0,1,1],[1,1,0],[0,1,0]], category: 'complex', description: '1103代，会产生混沌演化最终稳定' },
+        '百代逝者': { pattern: [[0,0,0,0,0,0,1,0],[1,1,0,0,0,0,0,0],[0,1,0,0,0,1,1,1]], category: 'complex', description: '百代逝者，经历130代后消失' },
+        '5260代': { pattern: [[0,1,0,0,0,0,0],[0,0,0,1,0,0,0],[1,1,0,0,1,1,1]], category: 'complex', description: '5260代图案，经历5206代产生13个滑翔机' },
+        // 复杂图案类别
+        '蝴蝶': { pattern: [[0,0,0,1,0,0,0],[0,0,1,0,1,0,0],[0,1,0,0,0,1,0],[0,0,1,1,1,0,0],[1,0,0,0,0,0,1]], category: 'complex', description: '蝴蝶图案，Queen bee的优雅演化' },
+        '炸弹': { pattern: [[1,0,0,0,1],[0,1,1,1,0],[0,1,0,1,0],[0,1,1,1,0],[1,0,0,0,1]], category: 'complex', description: '炸弹形状，会产生有趣的演化' },
+        '花朵': { pattern: [[0,0,1,0,0],[0,1,0,1,0],[1,0,1,0,1],[0,1,0,1,0],[0,0,1,0,0]], category: 'complex', description: '花朵形状，会绽放演化' },
+        '无限增长（DNA密码）': { pattern: [[1,1,1,0,1],[1,0,0,0,0],[0,0,0,1,1],[0,1,1,0,1],[1,0,1,0,1]], category: 'complex', description: '无限增长（DNA密码），会不断扩展产生新的结构' },
+        // 枪类图案（发射器）
+        '高斯帕枪': { pattern: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], category: 'gun', description: '著名的滑翔机发射器' },
+        '双枪': { pattern: [[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0],[1,1,0,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0],[1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,1,0,0,0,0,0,1,1,0,0],[0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,1,1,0,1],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0]], category: 'gun', description: '双枪发射器' },
+    };
+
+    // RLE格式解析函数
+    function parseRLE(rle, w, h) {
+        const matrix = Array.from({ length: h }, () => Array(w).fill(0));
+        let x = 0;
+        let y = 0;
+        
+        let countStr = '';
+        for (const char of rle) {
+            if (char >= '0' && char <= '9') {
+                countStr += char;
+            } else {
+                const count = countStr === '' ? 1 : parseInt(countStr, 10);
+                countStr = '';
+
+                if (char === 'b') { // Dead cell
+                    x += count;
+                } else if (char === 'o') { // Alive cell
+                    for (let i = 0; i < count; i++) {
+                        if (x < w && y < h) {
+                            matrix[y][x] = 1;
+                        }
+                        x++;
+                    }
+                } else if (char === '$') { // New line
+                    y += count;
+                    x = 0;
+                } else if (char === '!') { // End of pattern
+                    break;
+                }
+            }
+        }
+        return matrix;
+    }
+
+    // 网格转RLE格式函数
+    function gridToRLE(grid) {
+        if (!grid || grid.length === 0) return { rle: '', width: 0, height: 0 };
+        
+        const height = grid.length;
+        const width = grid[0].length;
+        
+        // 找到实际的边界
+        let minRow = height, maxRow = -1;
+        let minCol = width, maxCol = -1;
+        
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (grid[y][x]) {
+                    minRow = Math.min(minRow, y);
+                    maxRow = Math.max(maxRow, y);
+                    minCol = Math.min(minCol, x);
+                    maxCol = Math.max(maxCol, x);
+                }
+            }
+        }
+        
+        if (maxRow === -1) return { rle: '', width: 0, height: 0 };
+        
+        const actualWidth = maxCol - minCol + 1;
+        const actualHeight = maxRow - minRow + 1;
+        
+        let rle = '';
+        
+        for (let y = minRow; y <= maxRow; y++) {
+            let count = 0;
+            let lastState = 0;
+            
+            for (let x = minCol; x <= maxCol; x++) {
+                const currentState = grid[y][x] ? 1 : 0;
+                
+                if (currentState === lastState) {
+                    count++;
+                } else {
+                    if (count > 0) {
+                        if (lastState === 0) {
+                            rle += count > 1 ? count + 'b' : 'b';
+                        } else {
+                            rle += count > 1 ? count + 'o' : 'o';
+                        }
+                    }
+                    count = 1;
+                    lastState = currentState;
+                }
+            }
+            
+            // 处理行末
+            if (count > 0) {
+                if (lastState === 0) {
+                    rle += count > 1 ? count + 'b' : 'b';
+                } else {
+                    rle += count > 1 ? count + 'o' : 'o';
+                }
+            }
+            
+            // 添加换行符（除了最后一行）
+            if (y < maxRow) {
+                rle += '$';
+            }
+        }
+        
+        rle += '!';
+        
+        return {
+            rle: rle,
+            width: actualWidth,
+            height: actualHeight
+        };
+    }
+
+    // 生命游戏主类
+    class GameOfLife {
+        constructor(rows = 80, cols = 100) {
+            // 基本游戏参数
+            this.rows = rows;           // 网格行数
+            this.cols = cols;           // 网格列数
+            this.generationsPerSecond = 5;  // 演化速度（世代/秒），默认5世代/秒
+            this.isRunning = false;     // 是否正在运行
+            this.drawMode = false;      // 是否处于绘图模式
+            this.isDrawing = false;     // 是否正在绘制
+            this.drawingMode = undefined; // 当前绘图操作的模式（true=画活细胞，false=画死细胞）
+            this.lastDrawnCell = null;  // 上次绘制的细胞位置，避免重复绘制
+            this.lastDrawnInfiniteCell = null; // 无限画布上次绘制的细胞位置，避免重复绘制
+            
+            // --- 增强功能：选择和粘贴的新状态 ---
+            this.isSelecting = false;   // 用户是否正在拖拽选择？
+            this.isPasting = false;  // Is user in "pasting" mode after copy/pan?
+            this.isInfiniteSelecting = false; // 无限画布是否正在选择
+            this.infiniteSelectionRect = {}; // 无限画布选择区域
+
+            this.generation = 0;
+            this.population = 0;
+            this.maxPopulation = 0;
+            this.maxPopulationGeneration = 0; // 记录最大种群出现的代数
+            
+            // 游戏规则系统
+            this.rules = { s: [2, 3], b: [3] }; // 默认康威生命游戏规则
+            
+            this.grid = this.createEmptyGrid();
+            this.history = [];
+            
+            this.intervalId = null;
+            
+            this.draggedPattern = null;
+            this.previewCells = [];
+            this.currentCategory = 'all';
+
+            // --- ENHANCEMENT: Refined clipboard and selection objects ---
+            this.selectionRect = { startX: 0, startY: 0, endX: 0, endY: 0 };
+            this.clipboard = null; // Will hold the pattern to be pasted
+            
+            // 无限模式相关属性
+            this.mode = 'finite';  // 当前模式：'finite' 或 'infinite'
+            this.liveCells = new Set();  // 无限模式下的活细胞集合
+            this.viewport = { 
+                scale: 15, 
+                offsetX: 0, 
+                offsetY: 0, 
+                isDragging: false, 
+                lastMousePos: { x: 0, y: 0 }
+            }; // 无限模式视口
+            this.ctx = null;  // 无限画布的2D上下文
+            
+            this.dom = {
+                gridContainer: document.getElementById('gridContainer'),
+                grid: document.getElementById('grid'),
+                infiniteCanvas: document.getElementById('infiniteCanvas'),  // 无限画布
+                ghost: null, 
+                selectionBox: null,
+                contextMenu: document.getElementById('contextMenu'),
+                generation: document.getElementById('generation'),
+                population: document.getElementById('population'),
+                maxPopulation: document.getElementById('maxPopulation'),
+                maxPopulationGeneration: document.getElementById('maxPopulationGeneration'), // 最大种群代数显示元素
+                playPauseBtn: document.getElementById('playPauseBtn'),
+                stepBtn: document.getElementById('stepBtn'),
+                undoBtn: document.getElementById('undoBtn'),
+                resetBtn: document.getElementById('resetBtn'),
+                randomBtn: document.getElementById('randomBtn'),
+                drawModeBtn: document.getElementById('drawModeBtn'),
+                exportBtn: document.getElementById('exportBtn'),
+                fullscreenBtn: document.getElementById('fullscreenBtn'),
+                saveBtn: document.getElementById('saveBtn'),
+                loadBtn: document.getElementById('loadBtn'),
+                confirmSave: document.getElementById('confirmSave'),
+                speedSlider: document.getElementById('speed'),
+                speedValue: document.getElementById('speedValue'),
+                gridSizeSelect: document.getElementById('gridSize'),
+                patternGrid: document.getElementById('patternGrid'),
+                categoryTabs: document.getElementById('categoryTabs'),
+                saveModal: document.getElementById('saveModal'),
+                saveNameInput: document.getElementById('saveName'),
+                savedStatesList: document.getElementById('savedStatesList'),
+                // 规则系统相关DOM元素
+                ruleSInput: document.getElementById('ruleS'),
+                ruleBInput: document.getElementById('ruleB'),
+                ruleSurvivalText: document.getElementById('rule-survival').querySelector('span:last-child'),
+                ruleBirthText: document.getElementById('rule-birth').querySelector('span:last-child'),
+            };
+
+            this.initialize();
+        }
+
+        // 🚀 速度计算的getter方法：将世代/秒转换为毫秒间隔
+        get speed() {
+            return Math.max(10, Math.round(1000 / this.generationsPerSecond));
+        }
+
+        initialize() {
+            // 初始化无限画布上下文
+            if (this.dom.infiniteCanvas) {
+                this.ctx = this.dom.infiniteCanvas.getContext('2d');
+            }
+            
+            this.createGridElements();
+            this.createPatternCategories();
+            this.filterPatterns();
+            this.setupEventListeners();
+            this.loadSavedStates();
+            this.updateStats();
+            this.updateRuleDescription(); // 初始化规则描述
+        }
+        
+        createEmptyGrid() {
+            return Array(this.rows).fill(null).map(() => Array(this.cols).fill(false));
+        }
+
+        createGridElements() {
+            const { grid } = this.dom;
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
+            
+            const containerWidth = this.dom.gridContainer.clientWidth;
+            const cellSize = Math.floor(containerWidth / this.cols) - 1;
+            const finalCellSize = Math.max(2, Math.min(15, cellSize));
+            
+            this.cellSize = { width: finalCellSize, height: finalCellSize };
+
+            grid.style.width = `${this.cols * (finalCellSize + 1)}px`;
+            grid.style.height = `${this.rows * (finalCellSize + 1)}px`;
+
+            let cellsFragment = document.createDocumentFragment();
+            for (let i = 0; i < this.rows; i++) {
+                for (let j = 0; j < this.cols; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.style.width = `${finalCellSize}px`;
+                    cell.style.height = `${finalCellSize}px`;
+                    cellsFragment.appendChild(cell);
+                }
+            }
+            grid.appendChild(cellsFragment);
+        }
+        
+        resizeGrid(rows, cols) {
+            this.pause();
+            this.rows = rows;
+            this.cols = cols;
+            this.grid = this.createEmptyGrid();
+            this.history = [];
+            this.generation = 0;
+            this.maxPopulation = 0;
+            this.createGridElements();
+            this.updateStats();
+            this.showToast(`網格已重設為 ${rows}×${cols}`);
+        }
+
+        // 切换模式方法
+        switchMode(newMode, rows, cols, isBounded = false) {
+            this.pause();
+            
+            // 🧹 清理当前模式的选择状态
+            this.hideContextMenu();
+            if (this.mode === 'infinite') {
+                // 清理无限模式的选择状态
+                this.clearInfiniteSelection();
+                this.isInfiniteSelecting = false;
+                // 清理无限模式的粘贴状态
+                if (this.isPasting) {
+                    this.dom.infiniteCanvas.classList.remove('pasting-mode');
+                }
+            } else {
+                // 清理有限模式的选择状态
+                this.clearSelection();
+                this.isSelecting = false;
+                // 清理有限模式的粘贴状态
+                if (this.isPasting) {
+                    this.dom.grid.classList.remove('pasting-mode');
+                    this.removeGhostElement();
+                }
+            }
+            
+            // 🚫 重置粘贴状态
+            if (this.isPasting) {
+                this.isPasting = false;
+                this.clipboard = null;
+                this.clearPreview();
+            }
+            
+            this.mode = newMode;
+            
+            if (newMode === 'infinite') {
+                // 切换到无限模式
+                this.dom.grid.classList.add('hidden');
+                this.dom.infiniteCanvas.classList.remove('hidden');
+                this.liveCells.clear();
+                const container = this.dom.gridContainer;
+                this.dom.infiniteCanvas.width = container.clientWidth;
+                this.dom.infiniteCanvas.height = container.clientHeight;
+                this.viewport.offsetX = this.dom.infiniteCanvas.width / 2;
+                this.viewport.offsetY = this.dom.infiniteCanvas.height / 2;
+                this.viewport.scale = 15;
+                // 无限模式下也支持绘图模式
+                this.dom.drawModeBtn.disabled = false;
+                // 绘制初始的无限画布
+                this.drawInfinite();
+                this.showToast('🌌 已切换到无限宇宙模式');
+            } else {
+                // 切换到有限模式
+                this.dom.grid.classList.remove('hidden');
+                this.dom.infiniteCanvas.classList.add('hidden');
+                this.rows = rows;
+                this.cols = cols;
+                this.isBounded = isBounded || false;  // 设置边界模式
+                this.grid = this.createEmptyGrid();
+                this.createGridElements();
+                
+                // 🔧 重新初始化有限模式的选择框DOM元素
+                if (this.dom.selectionBox) {
+                    this.dom.selectionBox.remove();
+                    this.dom.selectionBox = null;
+                }
+                
+                // 🔴 确保运行状态边框样式正确应用
+                if (this.isRunning) {
+                    this.dom.grid.classList.add('running-mode');
+                } else {
+                    this.dom.grid.classList.remove('running-mode');
+                }
+                
+                this.dom.drawModeBtn.disabled = false;
+                const modeText = this.isBounded ? '有界模式' : '无界模式';
+                this.showToast(`已切换到${modeText} ${rows}×${cols} - ${this.isBounded ? '细胞无法穿越边界' : '细胞可以穿越边界'}`);
+            }
+            this.reset(true);
+        }
+
+        countNeighbors(row, col) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;  // 跳过自己
+                    
+                    if (this.isBounded) {
+                        // 有界模式：检查邻居是否在网格边界内
+                        const r = row + i;
+                        const c = col + j;
+                        if (r >= 0 && r < this.rows && c >= 0 && c < this.cols) {
+                            if (this.grid[r] && this.grid[r][c]) count++;
+                        }
+                        // 边界外的邻居不计入活细胞数量
+                    } else {
+                        // 无界模式：使用取模运算符实现循环边界
+                        const r = (row + i + this.rows) % this.rows;
+                        const c = (col + j + this.cols) % this.cols;
+                        if (this.grid[r] && this.grid[r][c]) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        nextGeneration() {
+            if (this.mode === 'finite') {
+                this.nextGenerationFinite();
+            } else {
+                this.nextGenerationInfinite();
+            }
+        }
+
+        // 有限模式的生成算法
+        nextGenerationFinite() {
+            this.saveToHistory();
+            const nextGrid = this.createEmptyGrid();
+            let changedCells = [];
+            for (let i = 0; i < this.rows; i++) {
+                for (let j = 0; j < this.cols; j++) {
+                    const neighbors = this.countNeighbors(i, j);
+                    const isAlive = this.grid[i][j];
+                    if (isAlive) {
+                        // 活细胞：检查是否满足存活条件
+                        nextGrid[i][j] = this.rules.s.includes(neighbors);
+                    } else {
+                        // 死细胞：检查是否满足诞生条件
+                        nextGrid[i][j] = this.rules.b.includes(neighbors);
+                    }
+                    if (nextGrid[i][j] !== isAlive) {
+                         changedCells.push({r: i, c: j});
+                    }
+                }
+            }
+            this.grid = nextGrid;
+            this.generation++;
+            this.updateChangedCellsDisplay(changedCells);
+            this.updateStats();
+        }
+
+        // 无限模式的生成算法
+        nextGenerationInfinite() {
+            const nextLiveCells = new Set();
+            const cellsToCheck = new Set();
+            
+            // 收集所有需要检查的细胞（活细胞及其邻居）
+            for (const cell of this.liveCells) {
+                const [x, y] = cell.split(',').map(Number);
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        cellsToCheck.add(`${x + i},${y + j}`);
+                    }
+                }
+            }
+            
+            // 检查每个细胞的状态
+            for (const cell of cellsToCheck) {
+                const neighbors = this.countNeighborsInfinite(cell);
+                const isAlive = this.liveCells.has(cell);
+                
+                if (isAlive && this.rules.s.includes(neighbors)) {
+                    nextLiveCells.add(cell);
+                } else if (!isAlive && this.rules.b.includes(neighbors)) {
+                    nextLiveCells.add(cell);
+                }
+            }
+            
+            this.liveCells = nextLiveCells;
+            this.generation++;
+            this.drawInfinite();
+            this.updateStats();
+        }
+
+        // 无限模式的邻居计数
+        countNeighborsInfinite(cellKey) {
+            const [x, y] = cellKey.split(',').map(Number);
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    if (this.liveCells.has(`${x + i},${y + j}`)) count++;
+                }
+            }
+            return count;
+        }
+        
+        updateCellDisplay(r, c) {
+            const cell = this.dom.grid.children[r * this.cols + c];
+            if (cell) cell.classList.toggle('alive', this.grid[r][c]);
+        }
+
+        // 绘制无限画布
+        drawInfinite() {
+            const { infiniteCanvas, gridContainer } = this.dom;
+            
+            // 检查画布和上下文是否存在
+            if (!infiniteCanvas || !this.ctx) {
+                console.error('无限画布或上下文未初始化');
+                return;
+            }
+            
+            // 动态调整画布大小
+            if(infiniteCanvas.width !== gridContainer.clientWidth || infiniteCanvas.height !== gridContainer.clientHeight){
+                infiniteCanvas.width = gridContainer.clientWidth;
+                infiniteCanvas.height = gridContainer.clientHeight;
+            }
+            
+            this.ctx.clearRect(0, 0, infiniteCanvas.width, infiniteCanvas.height);
+            this.ctx.save();
+            this.ctx.translate(this.viewport.offsetX, this.viewport.offsetY);
+            this.ctx.scale(this.viewport.scale, this.viewport.scale);
+            
+            // 计算可见区域
+            const visibleBounds = {
+                left: -this.viewport.offsetX / this.viewport.scale,
+                right: (infiniteCanvas.width - this.viewport.offsetX) / this.viewport.scale,
+                top: -this.viewport.offsetY / this.viewport.scale,
+                bottom: (infiniteCanvas.height - this.viewport.offsetY) / this.viewport.scale
+            };
+            
+            // 绘制网格线
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            this.ctx.lineWidth = 1 / this.viewport.scale;
+            
+            const lineThresholdMajor = 8;
+            if (this.viewport.scale > lineThresholdMajor) {
+                this.ctx.beginPath();
+                for (let x = Math.floor(visibleBounds.left); x <= Math.ceil(visibleBounds.right); x++) {
+                    this.ctx.moveTo(x, visibleBounds.top);
+                    this.ctx.lineTo(x, visibleBounds.bottom);
+                }
+                for (let y = Math.floor(visibleBounds.top); y <= Math.ceil(visibleBounds.bottom); y++) {
+                    this.ctx.moveTo(visibleBounds.left, y);
+                    this.ctx.lineTo(visibleBounds.right, y);
+                }
+                this.ctx.stroke();
+            }
+            
+            // 绘制活细胞
+            this.ctx.fillStyle = '#e74c3c';
+            for (const cell of this.liveCells) {
+                const [x, y] = cell.split(',').map(Number);
+                if (x >= visibleBounds.left - 1 && x <= visibleBounds.right + 1 &&
+                    y >= visibleBounds.top - 1 && y <= visibleBounds.bottom + 1) {
+                    this.ctx.fillRect(x, y, 0.9, 0.9);
+                }
+            }
+            
+            // 绘制拖拽预览
+            if (this.infinitePreview) {
+                this.ctx.fillStyle = 'rgba(231, 76, 60, 0.5)'; // 半透明红色
+                const { pattern, startX, startY } = this.infinitePreview;
+                for (let i = 0; i < pattern.length; i++) {
+                    for (let j = 0; j < pattern[i].length; j++) {
+                        if (pattern[i][j]) {
+                            const x = startX + j;
+                            const y = startY + i;
+                            if (x >= visibleBounds.left - 1 && x <= visibleBounds.right + 1 &&
+                                y >= visibleBounds.top - 1 && y <= visibleBounds.bottom + 1) {
+                                this.ctx.fillRect(x, y, 0.9, 0.9);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制选择框
+            if (this.infiniteSelectionRect && typeof this.infiniteSelectionRect.startX === 'number') {
+                const { startX, startY, endX, endY } = this.infiniteSelectionRect;
+                const x1 = Math.min(startX, endX);
+                const y1 = Math.min(startY, endY);
+                const x2 = Math.max(startX, endX);
+                const y2 = Math.max(startY, endY);
+                
+                // 绘制选择框边框
+                this.ctx.strokeStyle = '#3498db';
+                this.ctx.lineWidth = 2 / this.viewport.scale;
+                this.ctx.setLineDash([5 / this.viewport.scale, 5 / this.viewport.scale]);
+                this.ctx.strokeRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+                
+                // 绘制选择框背景
+                this.ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                this.ctx.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+                
+                // 重置线条样式
+                this.ctx.setLineDash([]);
+            }
+            
+            this.ctx.restore();
+        }
+
+        // 屏幕坐标转世界坐标
+        screenToWorld(x, y) {
+            const rect = this.dom.infiniteCanvas.getBoundingClientRect();
+            const canvasX = x - rect.left;
+            const canvasY = y - rect.top;
+            const worldX = (canvasX - this.viewport.offsetX) / this.viewport.scale;
+            const worldY = (canvasY - this.viewport.offsetY) / this.viewport.scale;
+            return { x: worldX, y: worldY };
+        }
+
+        // 无限模式鼠标按下事件
+        handleInfiniteMouseDown(e) {
+            // 清除之前的选择和上下文菜单
+            this.hideContextMenu();
+            this.clearInfiniteSelection();
+            
+            // 如果正在粘贴模式，执行粘贴操作
+            if (this.isPasting) {
+                this.pasteFromInfiniteClipboard(e);
+                return;
+            }
+            
+            // 记录初始位置用于区分点击和拖拽
+            this.viewport.mouseDownPos = { x: e.clientX, y: e.clientY };
+            this.viewport.hasMoved = false;
+            
+            if (e.button === 0) { // 左键
+                if (this.drawMode) {
+                    // 绘图模式：开始绘制细胞
+                    this.isDrawing = true;
+                    const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+                    const cellX = Math.floor(x);
+                    const cellY = Math.floor(y);
+                    const cellKey = `${cellX},${cellY}`;
+                    
+                    // 根据当前细胞状态决定绘图模式（画活细胞还是死细胞）
+                    this.drawingMode = !this.liveCells.has(cellKey);
+                    this.lastDrawnInfiniteCell = { x: cellX, y: cellY };
+                    
+                    // 执行绘制操作
+                    if (this.drawingMode) {
+                        this.liveCells.add(cellKey);
+                    } else {
+                        this.liveCells.delete(cellKey);
+                    }
+                    this.drawInfinite();
+                    this.updateStats();
+                } else {
+                    // 非绘图模式：允许拖拽
+                    this.viewport.isDragging = true;
+                    this.viewport.lastMousePos = { x: e.clientX, y: e.clientY };
+                    this.dom.infiniteCanvas.style.cursor = 'grabbing';
+                }
+            } else if (e.button === 2) { // 右键
+                if (this.drawMode) {
+                    // 绘图模式下右键开始选择
+                    this.isInfiniteSelecting = true;
+                    this.startInfiniteSelection(e);
+                } else {
+                    // 非绘图模式：允许拖拽
+                    this.viewport.isDragging = true;
+                    this.viewport.lastMousePos = { x: e.clientX, y: e.clientY };
+                    this.dom.infiniteCanvas.style.cursor = 'grabbing';
+                }
+                e.preventDefault(); // 阻止右键菜单
+            }
+        }
+
+        // 无限模式鼠标移动事件
+        handleInfiniteMouseMove(e) {
+            // 处理粘贴模式下的幽灵预览
+            if (this.isPasting) {
+                this.updateInfiniteGhostPosition(e);
+                this.showInfinitePreview(e, this.clipboard);
+                return;
+            }
+            
+            // 处理绘图模式下的拖拽绘制
+            if (this.drawMode && this.isDrawing) {
+                const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+                const cellX = Math.floor(x);
+                const cellY = Math.floor(y);
+                const cellKey = `${cellX},${cellY}`;
+                
+                // 避免重复绘制同一个细胞
+                if (this.lastDrawnInfiniteCell && 
+                    this.lastDrawnInfiniteCell.x === cellX && 
+                    this.lastDrawnInfiniteCell.y === cellY) {
+                    return;
+                }
+                
+                // 根据初始绘图模式继续绘制
+                if (this.drawingMode) {
+                    this.liveCells.add(cellKey);
+                } else {
+                    this.liveCells.delete(cellKey);
+                }
+                
+                this.lastDrawnInfiniteCell = { x: cellX, y: cellY };
+                this.drawInfinite();
+                this.updateStats();
+                return;
+            }
+            
+            // 处理无限画布选择模式
+            if (this.isInfiniteSelecting) {
+                this.updateInfiniteSelection(e);
+                return;
+            }
+            
+            if (!this.viewport.isDragging) return;
+            
+            // 检测是否移动了足够距离
+            if (!this.viewport.hasMoved && this.viewport.mouseDownPos) {
+                const moveDistance = Math.sqrt(
+                    Math.pow(e.clientX - this.viewport.mouseDownPos.x, 2) + 
+                    Math.pow(e.clientY - this.viewport.mouseDownPos.y, 2)
+                );
+                if (moveDistance > 5) { // 移动超过5像素才算拖拽
+                    this.viewport.hasMoved = true;
+                }
+            }
+            
+            if (this.viewport.hasMoved) {
+                const dx = e.clientX - this.viewport.lastMousePos.x;
+                const dy = e.clientY - this.viewport.lastMousePos.y;
+                this.viewport.offsetX += dx;
+                this.viewport.offsetY += dy;
+                this.viewport.lastMousePos = { x: e.clientX, y: e.clientY };
+                
+                this.drawInfinite();
+            }
+        }
+
+        // 无限模式鼠标释放事件
+        handleInfiniteMouseUp(e) {
+            if (e.button === 0) { // 左键释放
+                if (this.drawMode) {
+                    // 绘图模式：结束绘制
+                    this.isDrawing = false;
+                    this.drawingMode = undefined;
+                    this.lastDrawnInfiniteCell = null;
+                } else {
+                    // 非绘图模式：如果没有移动，则执行点击操作
+                    if (!this.viewport.hasMoved) {
+                        const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+                        const cellX = Math.floor(x);
+                        const cellY = Math.floor(y);
+                        const cellKey = `${cellX},${cellY}`;
+                        
+                        if (this.liveCells.has(cellKey)) {
+                            this.liveCells.delete(cellKey);
+                        } else {
+                            this.liveCells.add(cellKey);
+                        }
+                        this.drawInfinite();
+                        this.updateStats();
+                    }
+                    
+                    this.viewport.isDragging = false;
+                    this.dom.infiniteCanvas.style.cursor = 'grab';
+                }
+                
+                this.viewport.hasMoved = false;
+                this.viewport.mouseDownPos = null;
+            } else if (e.button === 2) { // 右键释放
+                if (this.isInfiniteSelecting) {
+                    // 结束选择并显示上下文菜单
+                    this.isInfiniteSelecting = false;
+                    this.endInfiniteSelection(e);
+                } else {
+                    this.viewport.isDragging = false;
+                    this.viewport.hasMoved = false;
+                    this.viewport.mouseDownPos = null;
+                    this.dom.infiniteCanvas.style.cursor = 'grab';
+                }
+            }
+        }
+
+        // 无限模式滚轮缩放事件
+        handleInfiniteWheel(e) {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            const rect = this.dom.infiniteCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const worldPosBeforeZoom = this.screenToWorld(e.clientX, e.clientY);
+            this.viewport.scale *= zoomFactor;
+            this.viewport.scale = Math.max(1, Math.min(50, this.viewport.scale));
+            const worldPosAfterZoom = this.screenToWorld(e.clientX, e.clientY);
+            
+            this.viewport.offsetX += (worldPosAfterZoom.x - worldPosBeforeZoom.x) * this.viewport.scale;
+            this.viewport.offsetY += (worldPosAfterZoom.y - worldPosBeforeZoom.y) * this.viewport.scale;
+            
+            this.drawInfinite();
+        }
+
+        // 在无限画布上显示拖拽预览
+        showInfinitePreview(e, pattern) {
+            // 清除之前的预览
+            this.clearInfinitePreview();
+            
+            const rect = this.dom.infiniteCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // 转换为世界坐标
+            const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+            const centerX = Math.floor(x);
+            const centerY = Math.floor(y);
+            
+            // 计算图案的起始位置（居中放置）
+            const startX = centerX - Math.floor((pattern[0]?.length || 0) / 2);
+            const startY = centerY - Math.floor(pattern.length / 2);
+            
+            // 存储预览信息用于绘制
+            this.infinitePreview = {
+                pattern,
+                startX,
+                startY
+            };
+            
+            // 重新绘制画布以显示预览
+            this.drawInfinite();
+        }
+
+        // 清除无限画布预览
+        clearInfinitePreview() {
+            if (this.infinitePreview) {
+                this.infinitePreview = null;
+                this.drawInfinite();
+            }
+        }
+        
+        // --- 无限画布选择功能 ---
+        startInfiniteSelection(e) {
+            const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+            const startX = Math.floor(x);
+            const startY = Math.floor(y);
+            
+            this.infiniteSelectionRect = {
+                startX: startX,
+                startY: startY,
+                endX: startX,
+                endY: startY
+            };
+            
+            this.drawInfinite(); // 重绘以显示选择框
+        }
+        
+        updateInfiniteSelection(e) {
+            if (!this.isInfiniteSelecting) return;
+            
+            const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+            this.infiniteSelectionRect.endX = Math.floor(x);
+            this.infiniteSelectionRect.endY = Math.floor(y);
+            
+            this.drawInfinite(); // 重绘以更新选择框
+        }
+        
+        endInfiniteSelection(e) {
+            const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+            const endX = Math.floor(x);
+            const endY = Math.floor(y);
+            
+            const { startX, startY } = this.infiniteSelectionRect;
+            
+            // 如果选择区域太小（单个细胞），则取消选择
+            if (startX === endX && startY === endY) {
+                this.clearInfiniteSelection();
+                return;
+            }
+            
+            // 规范化选择区域
+            const x1 = Math.min(startX, endX);
+            const y1 = Math.min(startY, endY);
+            const x2 = Math.max(startX, endX);
+            const y2 = Math.max(startY, endY);
+            
+            this.infiniteSelectionRect = { startX: x1, startY: y1, endX: x2, endY: y2 };
+            
+            // 显示上下文菜单
+            this.showContextMenu(e.clientX, e.clientY);
+        }
+        
+        clearInfiniteSelection() {
+            this.infiniteSelectionRect = {};
+            this.drawInfinite(); // 重绘以清除选择框
+        }
+        
+        // 从无限画布选择区域提取图案
+        extractPatternFromInfiniteSelection() {
+            const { startX, startY, endX, endY } = this.infiniteSelectionRect;
+            if (typeof startX !== 'number' || typeof startY !== 'number' || 
+                typeof endX !== 'number' || typeof endY !== 'number') {
+                return null;
+            }
+            
+            const width = endX - startX + 1;
+            const height = endY - startY + 1;
+            if (width <= 0 || height <= 0) return null;
+            
+            const pattern = Array(height).fill(null).map(() => Array(width).fill(false));
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const cellX = startX + x;
+                    const cellY = startY + y;
+                    const cellKey = `${cellX},${cellY}`;
+                    pattern[y][x] = this.liveCells.has(cellKey);
+                }
+            }
+            
+            return pattern;
+        }
+        
+        // 清除无限画布选择区域的细胞
+        clearInfiniteArea(rect) {
+            const { startX, startY, endX, endY } = rect;
+            for (let y = startY; y <= endY; y++) {
+                for (let x = startX; x <= endX; x++) {
+                    const cellKey = `${x},${y}`;
+                    this.liveCells.delete(cellKey);
+                }
+            }
+            this.drawInfinite();
+            this.updateStats();
+        }
+        
+        // 在无限画布上粘贴图案
+        pasteInfinitePattern(pattern, startX, startY) {
+            if (!pattern) return;
+            
+            const height = pattern.length;
+            const width = pattern[0].length;
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (pattern[y][x]) {
+                        const cellX = startX + x;
+                        const cellY = startY + y;
+                        const cellKey = `${cellX},${cellY}`;
+                        this.liveCells.add(cellKey);
+                    }
+                }
+            }
+            
+            this.drawInfinite();
+            this.updateStats();
+        }
+        
+        // 从无限画布剪贴板粘贴
+        pasteFromInfiniteClipboard(e) {
+            if (!this.clipboard) return;
+            
+            const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+            const pattern = this.clipboard;
+            const startX = Math.floor(x) - Math.floor(pattern[0].length / 2);
+            const startY = Math.floor(y) - Math.floor(pattern.length / 2);
+            
+            this.pasteInfinitePattern(pattern, startX, startY);
+            this.cancelInfinitePasting();
+            this.showToast('貼上成功！');
+        }
+        
+        // 取消无限画布粘贴模式
+        cancelInfinitePasting() {
+            this.isPasting = false;
+            this.dom.infiniteCanvas.classList.remove('pasting-mode');
+            this.clearInfinitePreview();
+        }
+        
+        // 更新无限画布幽灵元素位置
+        updateInfiniteGhostPosition(e) {
+            // 无限画布不需要DOM幽灵元素，直接通过预览实现
+        }
+
+        // 在无限画布上放置图案
+        placePatternInfinite(e, pattern) {
+            const { x, y } = this.screenToWorld(e.clientX, e.clientY);
+            const centerX = Math.floor(x);
+            const centerY = Math.floor(y);
+            
+            // 计算图案的起始位置（居中放置）
+            const startX = centerX - Math.floor((pattern[0]?.length || 0) / 2);
+            const startY = centerY - Math.floor(pattern.length / 2);
+            
+            // 将图案添加到liveCells中
+            for (let i = 0; i < pattern.length; i++) {
+                for (let j = 0; j < pattern[i].length; j++) {
+                    if (pattern[i][j]) {
+                        const cellX = startX + j;
+                        const cellY = startY + i;
+                        const cellKey = `${cellX},${cellY}`;
+                        this.liveCells.add(cellKey);
+                    }
+                }
+            }
+            
+            // 清除预览并重新绘制
+            this.clearInfinitePreview();
+            this.drawInfinite();
+            this.updateStats();
+        }
+
+        updateChangedCellsDisplay(changedCells) {
+             for (const {r, c} of changedCells) this.updateCellDisplay(r,c);
+        }
+
+        updateFullGridDisplay() {
+            for (let i = 0; i < this.rows; i++) {
+                for (let j = 0; j < this.cols; j++) this.updateCellDisplay(i, j);
+            }
+        }
+
+        updateStats() {
+            if (this.mode === 'infinite') {
+                this.population = this.liveCells.size;
+            } else {
+                this.population = this.grid.flat().filter(Boolean).length;
+            }
+            // 如果当前种群数超过历史最大值，更新最大种群和对应的代数
+            if (this.population > this.maxPopulation) {
+                this.maxPopulation = this.population;
+                this.maxPopulationGeneration = this.generation; // 记录最大种群出现的代数
+            }
+            this.dom.generation.textContent = this.generation;
+            this.dom.population.textContent = this.population;
+            this.dom.maxPopulation.textContent = this.maxPopulation;
+            this.dom.maxPopulationGeneration.textContent = this.maxPopulationGeneration; // 显示最大种群代数
+        }
+        
+        togglePlayPause() { this.isRunning ? this.pause() : this.start(); }
+        start() {
+            if (this.isRunning) return;
+            this.isRunning = true;
+            this.intervalId = setInterval(() => this.nextGeneration(), this.speed);
+            this.dom.playPauseBtn.textContent = '⏸️ 暫停';
+            this.dom.playPauseBtn.className = 'btn warning';
+            
+            // 🔴 添加游戏运行状态的红色边框
+            if (this.mode !== 'infinite') {
+                this.dom.grid.classList.add('running-mode');
+            }
+        }
+
+        pause() {
+            if (!this.isRunning) return;
+            this.isRunning = false;
+            clearInterval(this.intervalId);
+            this.dom.playPauseBtn.textContent = '▶️ 開始';
+            this.dom.playPauseBtn.className = 'btn success';
+            
+            // 🔴 移除游戏运行状态的红色边框
+            if (this.mode !== 'infinite') {
+                this.dom.grid.classList.remove('running-mode');
+            }
+        }
+
+        step() { if (!this.isRunning) this.nextGeneration(); }
+        reset() {
+            this.pause();
+            if (this.mode === 'infinite') {
+                this.liveCells.clear();
+                this.drawInfinite();
+            } else {
+                this.grid = this.createEmptyGrid();
+                this.updateFullGridDisplay();
+            }
+            this.history = [];
+            this.generation = 0;
+            this.maxPopulation = 0;
+            this.maxPopulationGeneration = 0; // 重置最大种群代数
+            this.updateStats();
+            this.showToast('遊戲已重置');
+        }
+
+        randomize() {
+            if (this.isRunning) return;
+            this.saveToHistory();
+            if (this.mode === 'infinite') {
+                this.liveCells.clear();
+                // 在视口中心区域随机生成细胞
+                const centerX = Math.floor(-this.viewport.offsetX / this.viewport.scale);
+                const centerY = Math.floor(-this.viewport.offsetY / this.viewport.scale);
+                for (let x = centerX - 20; x < centerX + 20; x++) {
+                    for (let y = centerY - 20; y < centerY + 20; y++) {
+                        if (Math.random() < 0.3) {
+                            this.liveCells.add(`${x},${y}`);
+                        }
+                    }
+                }
+                this.drawInfinite();
+            } else {
+                this.grid = this.grid.map(row => row.map(() => Math.random() < 0.3));
+                this.updateFullGridDisplay();
+            }
+            this.updateStats();
+            this.showToast('已生成随机图案');
+        }
+        
+        saveToHistory() {
+            if (this.history.length > 50) this.history.shift();
+            this.history.push(this.grid.map(row => [...row]));
+        }
+
+        undo() {
+            if (this.isRunning || this.history.length === 0) return;
+            this.grid = this.history.pop();
+            if(this.generation > 0) this.generation--;
+            this.updateFullGridDisplay();
+            this.updateStats();
+            this.showToast('已回撤一步');
+        }
+        
+        // 更新游戏规则
+        updateRules() {
+            const sValue = this.dom.ruleSInput.value.replace(/[^0-8]/g, '');
+            const bValue = this.dom.ruleBInput.value.replace(/[^0-8]/g, '');
+            
+            // 更新输入框显示（移除非法字符）
+            this.dom.ruleSInput.value = sValue;
+            this.dom.ruleBInput.value = bValue;
+            
+            // 更新规则数组
+            this.rules.s = sValue.split('').map(Number);
+            this.rules.b = bValue.split('').map(Number);
+            
+            // 更新规则描述
+            this.updateRuleDescription();
+        }
+        
+        // 更新规则描述文本
+        updateRuleDescription() {
+            const sText = this.rules.s.length > 0 ? this.rules.s.join(' 或 ') : '无';
+            const bText = this.rules.b.length > 0 ? this.rules.b.join(' 或 ') : '无';
+            
+            this.dom.ruleSurvivalText.innerHTML = `<b>存活 (S):</b> 活细胞邻居为 ${sText} 个则存活。`;
+            this.dom.ruleBirthText.innerHTML = `<b>诞生 (B):</b> 死细胞邻居为 ${bText} 个则复活。`;
+        }
+        
+        // --- Event Listeners Setup ---
+        setupEventListeners() {
+            this.dom.grid.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('mousedown', e => this.handleMouseDown(e));
+            document.addEventListener('mousemove', e => this.handleMouseMove(e));
+            document.addEventListener('mouseup', e => this.handleMouseUp(e));
+            this.dom.grid.addEventListener('click', e => this.handleGridClick(e));
+            
+            document.addEventListener('dragover', e => this.handleDocumentDragOver(e));
+            this.dom.grid.addEventListener('dragleave', () => this.clearPreview());
+            this.dom.grid.addEventListener('drop', e => this.handlePatternDrop(e));
+            this.dom.patternGrid.addEventListener('dragstart', e => this.handlePatternDragStart(e));
+            this.dom.patternGrid.addEventListener('click', e => this.handlePatternActionsClick(e));
+            // 🖱️ 添加双击事件监听器，实现双击图案进入粘贴模式
+            this.dom.patternGrid.addEventListener('dblclick', e => this.handlePatternDoubleClick(e));
+            document.addEventListener('dragend', () => this.handlePatternDragEnd());
+
+            this.dom.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+            this.dom.stepBtn.addEventListener('click', () => this.step());
+            this.dom.undoBtn.addEventListener('click', () => this.undo());
+            this.dom.resetBtn.addEventListener('click', () => this.reset());
+            this.dom.randomBtn.addEventListener('click', () => this.randomize());
+            this.dom.drawModeBtn.addEventListener('click', () => this.toggleDrawMode());
+            this.dom.exportBtn.addEventListener('click', () => this.exportImage());
+            this.dom.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+            
+            this.dom.speedSlider.addEventListener('input', e => {
+                this.generationsPerSecond = parseInt(e.target.value, 10);  // 🎯 直接设置世代/秒
+                this.dom.speedValue.textContent = `${this.generationsPerSecond} 世代/秒`;  // 🎮 显示世代/秒
+                if (this.isRunning) { this.pause(); this.start(); }  // 🔄 重启定时器应用新速度
+            });
+            this.dom.gridSizeSelect.addEventListener('change', e => {
+                const parts = e.target.value.split(',');
+                if (parts[0] === 'infinite') {
+                    this.switchMode('infinite');
+                    this.showToast('🌌 已切换到无限宇宙模式');
+                    return;
+                }
+                // 解析行、列和边界模式参数
+                const [rows, cols, isBounded] = parts;
+                const numRows = parseInt(rows, 10);
+                const numCols = parseInt(cols, 10);
+                const bounded = isBounded === 'true';  // 将字符串转换为布尔值
+                
+                // 切换到有限模式并设置边界模式
+                this.switchMode('finite', numRows, numCols, bounded);
+                
+                // 显示相应的提示信息
+                const modeText = bounded ? '有界模式' : '无界模式';
+                this.showToast(`已切换到${modeText} ${numRows}×${numCols} - ${bounded ? '细胞无法穿越边界' : '细胞可以穿越边界'}`);
+            });
+            this.dom.categoryTabs.addEventListener('click', e => {
+                 if (e.target.matches('.category-tab')) this.filterPatterns(e.target.dataset.category);
+            });
+            document.addEventListener('keydown', e => this.handleKeyDown(e));
+
+            this.dom.saveModal.querySelector('.close').addEventListener('click', () => this.toggleModal(false));
+            this.dom.saveBtn.addEventListener('click', () => this.toggleModal(true));
+            this.dom.loadBtn.addEventListener('click', () => this.toggleModal(true));
+            this.dom.confirmSave.addEventListener('click', () => this.saveState());
+            this.dom.savedStatesList.addEventListener('click', e => this.handleSavedStateClick(e));
+            this.dom.contextMenu.addEventListener('click', e => this.handleContextMenuClick(e));
+            
+            // 规则输入框事件监听器
+            this.dom.ruleSInput.addEventListener('input', () => this.updateRules());
+            this.dom.ruleBInput.addEventListener('input', () => this.updateRules());
+
+            window.addEventListener('resize', () => this.resizeGrid(this.rows, this.cols));
+            
+            // 无限画布事件监听器
+            if (this.dom.infiniteCanvas) {
+                this.dom.infiniteCanvas.addEventListener('mousedown', e => this.handleInfiniteMouseDown(e));
+                this.dom.infiniteCanvas.addEventListener('mousemove', e => this.handleInfiniteMouseMove(e));
+                this.dom.infiniteCanvas.addEventListener('mouseup', e => this.handleInfiniteMouseUp(e));
+                this.dom.infiniteCanvas.addEventListener('wheel', e => this.handleInfiniteWheel(e));
+                // 添加拖拽事件支持
+                this.dom.infiniteCanvas.addEventListener('dragover', e => this.handleDocumentDragOver(e));
+                this.dom.infiniteCanvas.addEventListener('dragleave', () => this.clearInfinitePreview());
+                this.dom.infiniteCanvas.addEventListener('drop', e => this.handlePatternDrop(e));
+                this.dom.infiniteCanvas.addEventListener('contextmenu', e => e.preventDefault());
+            }
+        }
+        
+        // --- Mouse and Interaction Handlers ---
+        getCellFromEvent(e) {
+            const rect = this.dom.grid.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / (rect.width / this.cols));
+            const row = Math.floor(y / (rect.height / this.rows));
+            if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                return { row, col };
+            }
+            return null;
+        }
+
+        // --- BUG FIX: Rewritten mouse down handler ---
+        handleMouseDown(e) {
+            // If the click is on the context menu itself, let its own handler work.
+            if (e.target.closest('#contextMenu')) {
+                return;
+            }
+
+            const isGridTarget = e.target.closest('.grid');
+
+            // If click is outside grid and menu, clear everything.
+            if (!isGridTarget) {
+                this.hideContextMenu();
+                this.clearSelection();
+                if (this.isPasting) {
+                    this.cancelPasting();
+                }
+                return;
+            }
+            
+            // At this point, we know the click is ON the grid.
+
+            if (this.isPasting) {
+                this.pasteFromClipboard(e);
+                return;
+            }
+
+            // Any click on the grid should clear a previous selection/menu.
+            this.hideContextMenu();
+            this.clearSelection();
+
+            if (e.button === 0) { // Left-click on grid
+                if (this.drawMode) {
+                    this.isDrawing = true;
+                    this.handleGridDraw(e);
+                }
+            } else if (e.button === 2) { // Right-click on grid
+                if (this.drawMode) {
+                    this.isSelecting = true;
+                    this.startSelection(e);
+                }
+            }
+        }
+        
+        handleMouseMove(e) {
+            if (this.isPasting) {
+                this.updateGhostPosition(e);
+                this.showPreview(e, this.clipboard);
+                return;
+            }
+            if (this.isDrawing) this.handleGridDraw(e);
+            if (this.isSelecting) this.updateSelection(e);
+        }
+        
+        handleMouseUp(e) {
+            if (this.isDrawing) {
+                this.saveToHistory();
+                this.isDrawing = false;
+                // 重置绘图状态，为下次绘图做准备
+                this.drawingMode = undefined;
+                this.lastDrawnCell = null;
+            }
+            if (this.isSelecting) {
+                this.isSelecting = false;
+                this.endSelection(e);
+            }
+        }
+        
+        handleGridClick(e) {
+            if (this.isRunning || this.drawMode || e.button !== 0 || this.isPasting) return;
+            const cellPos = this.getCellFromEvent(e);
+            if (cellPos) {
+                this.saveToHistory();
+                const { row, col } = cellPos;
+                this.grid[row][col] = !this.grid[row][col];
+                this.updateCellDisplay(row, col);
+                this.updateStats();
+            }
+        }
+
+        handleGridDraw(e) {
+            if (this.isRunning) return;
+            const cellPos = this.getCellFromEvent(e);
+            if(cellPos) {
+                const { row, col } = cellPos;
+                
+                // 如果是第一次点击，记录初始状态并决定绘图行为
+                if (!this.isDrawing || this.drawingMode === undefined) {
+                    this.drawingMode = !this.grid[row][col]; // 根据第一个点击的细胞状态决定绘图模式
+                    this.lastDrawnCell = { row, col }; // 记录上次绘制的细胞位置
+                }
+                
+                // 避免重复绘制同一个细胞
+                if (this.lastDrawnCell && this.lastDrawnCell.row === row && this.lastDrawnCell.col === col) {
+                    return;
+                }
+                
+                // 批量绘图：统一设置为drawingMode决定的状态
+                if (this.grid[row][col] !== this.drawingMode) {
+                    this.grid[row][col] = this.drawingMode;
+                    this.updateCellDisplay(row, col);
+                    this.updateStats();
+                }
+                
+                this.lastDrawnCell = { row, col };
+            }
+        }
+        
+        handleKeyDown(e) {
+            if(document.activeElement.tagName === 'INPUT') return;
+            const keyMap = {
+                ' ': () => this.togglePlayPause(), 'ArrowRight': () => this.step(),
+                'ArrowLeft': () => this.undo(), 'c': () => this.reset(),
+                'r': () => this.randomize(),
+                'ArrowUp': () => { this.dom.speedSlider.value = Math.min(100, parseInt(this.dom.speedSlider.value, 10) + 5); this.dom.speedSlider.dispatchEvent(new Event('input')); },  // ⬆️ 增加5世代/秒
+                'ArrowDown': () => { this.dom.speedSlider.value = Math.max(1, parseInt(this.dom.speedSlider.value, 10) - 5); this.dom.speedSlider.dispatchEvent(new Event('input')); }  // ⬇️ 减少5世代/秒
+            };
+            if (keyMap[e.key]) { e.preventDefault(); keyMap[e.key](); }
+        }
+
+        toggleDrawMode() {
+            // 切换绘图模式开关
+            if (this.drawMode) {
+                // 退出绘图模式
+                this.drawMode = false;
+                this.dom.drawModeBtn.classList.remove('warning');
+                if (this.mode === 'finite') {
+                    this.dom.grid.classList.remove('drawing-mode');
+                } else {
+                    this.dom.infiniteCanvas.classList.remove('drawing-mode');
+                }
+                this.showToast('已退出绘图模式');
+            } else {
+                // 进入绘图模式
+                this.drawMode = true;
+                this.dom.drawModeBtn.classList.add('warning');
+                if (this.mode === 'finite') {
+                    this.dom.grid.classList.add('drawing-mode');
+                    this.showToast('绘图模式开启 - 按住左键拖拽可批量切换细胞状态');
+                } else {
+                    this.dom.infiniteCanvas.classList.add('drawing-mode');
+                    this.showToast('绘图模式开启 - 按住左键拖拽可在无限画布上绘制细胞');
+                }
+            }
+        }
+
+        // --- ENHANCEMENT: Selection, Highlighting, and Context Menu Logic ---
+        
+        startSelection(e) {
+            const startPos = this.getCellFromEvent(e);
+            if (!startPos) return;
+
+            this.selectionRect.startX = this.selectionRect.endX = startPos.col;
+            this.selectionRect.startY = this.selectionRect.endY = startPos.row;
+
+            if (!this.dom.selectionBox) {
+                this.dom.selectionBox = document.createElement('div');
+                this.dom.selectionBox.className = 'selection-box';
+                this.dom.grid.appendChild(this.dom.selectionBox);
+            }
+            
+            this.dom.selectionBox.style.display = 'block';
+            this.updateSelectionBox();
+        }
+
+        updateSelection(e) {
+            if (!this.isSelecting) return;
+            const currentPos = this.getCellFromEvent(e);
+            if (!currentPos) return;
+
+            this.selectionRect.endX = currentPos.col;
+            this.selectionRect.endY = currentPos.row;
+            this.updateSelectionBox();
+        }
+
+        updateSelectionBox() {
+            const { startX, startY, endX, endY } = this.selectionRect;
+            const x1 = Math.min(startX, endX);
+            const y1 = Math.min(startY, endY);
+            const x2 = Math.max(startX, endX);
+            const y2 = Math.max(startY, endY);
+
+            this.dom.selectionBox.style.left = `${x1 * (this.cellSize.width + 1)}px`;
+            this.dom.selectionBox.style.top = `${y1 * (this.cellSize.height + 1)}px`;
+            this.dom.selectionBox.style.width = `${(x2 - x1 + 1) * (this.cellSize.width + 1)}px`;
+            this.dom.selectionBox.style.height = `${(y2 - y1 + 1) * (this.cellSize.height + 1)}px`;
+
+            // This is the core of the highlight enhancement
+            let innerHTML = '';
+            for (let r = y1; r <= y2; r++) {
+                for (let c = x1; c <= x2; c++) {
+                    if (this.grid[r] && this.grid[r][c]) {
+                        const top = (r - y1) * (this.cellSize.height + 1);
+                        const left = (c - x1) * (this.cellSize.width + 1);
+                        innerHTML += `<div class="highlight-cell" style="top: ${top}px; left: ${left}px; width: ${this.cellSize.width}px; height: ${this.cellSize.height}px;"></div>`;
+                    }
+                }
+            }
+            this.dom.selectionBox.innerHTML = innerHTML;
+        }
+
+        endSelection(e) {
+            const endPos = this.getCellFromEvent(e);
+            if (!endPos) { this.clearSelection(); return; }
+
+            const { startX, startY } = this.selectionRect;
+            // If selection is just a single cell, do nothing.
+            if (startX === endPos.col && startY === endPos.row) {
+                 this.clearSelection();
+                 return;
+            }
+            
+            const x1 = Math.min(startX, endPos.col);
+            const y1 = Math.min(startY, endPos.row);
+            const x2 = Math.max(startX, endPos.col);
+            const y2 = Math.max(startY, endPos.row);
+            
+            this.selectionRect = { startX: x1, startY: y1, endX: x2, endY: y2 };
+            this.showContextMenu(e.clientX, e.clientY);
+        }
+
+        clearSelection() {
+            if (this.dom.selectionBox) {
+                this.dom.selectionBox.style.display = 'none';
+                this.dom.selectionBox.innerHTML = '';
+            }
+            this.selectionRect = {};
+        }
+
+        showContextMenu(x, y) {
+            this.dom.contextMenu.style.left = `${x}px`;
+            this.dom.contextMenu.style.top = `${y}px`;
+            this.dom.contextMenu.classList.add('show');
+        }
+
+        hideContextMenu() {
+            this.dom.contextMenu.classList.remove('show');
+        }
+
+        handleContextMenuClick(e) {
+            const action = e.target.closest('[data-action]')?.dataset.action;
+            if (!action) return;
+
+            this.hideContextMenu();
+            
+            // 判断是有限模式还是无限模式
+            const isInfiniteMode = this.mode === 'infinite';
+            const pattern = isInfiniteMode ? this.extractPatternFromInfiniteSelection() : this.extractPatternFromSelection();
+            
+            if (!pattern || pattern.length === 0) {
+                if (isInfiniteMode) {
+                    this.clearInfiniteSelection();
+                } else {
+                    this.clearSelection();
+                }
+                return;
+            }
+
+            switch(action) {
+                case 'copy':
+                case 'pan':
+                    this.clipboard = pattern;
+                    if (action === 'pan') {
+                        if (isInfiniteMode) {
+                            this.clearInfiniteArea(this.infiniteSelectionRect);
+                        } else {
+                            this.clearArea(this.selectionRect);
+                        }
+                    }
+                    this.isPasting = true;
+                    if (isInfiniteMode) {
+                        this.dom.infiniteCanvas.classList.add('pasting-mode');
+                    } else {
+                        this.dom.grid.classList.add('pasting-mode');
+                        this.createGhostElement(pattern, true); // Create pasting ghost
+                    }
+                    this.showToast(action === 'copy' ? '已複製！左鍵點擊貼上' : '已平移！左鍵點擊貼上');
+                    break;
+                case 'rotate':
+                case 'flip-h':
+                case 'flip-v':
+                    if (isInfiniteMode) {
+                        this.clearInfiniteArea(this.infiniteSelectionRect);
+                        const transformed = this.transformPattern(pattern, action);
+                        this.pasteInfinitePattern(transformed, this.infiniteSelectionRect.startX, this.infiniteSelectionRect.startY);
+                    } else {
+                        this.clearArea(this.selectionRect);
+                        const transformed = this.transformPattern(pattern, action);
+                        this.pastePattern(transformed, this.selectionRect.startY, this.selectionRect.startX);
+                    }
+                    break;
+                case 'delete':
+                    // 删除选中区域的所有细胞
+                    if (isInfiniteMode) {
+                        this.clearInfiniteArea(this.infiniteSelectionRect);
+                    } else {
+                        this.clearArea(this.selectionRect);
+                    }
+                    this.showToast('已删除选中区域的细胞');
+                    break;
+            }
+            
+            // Clear selection box after action
+            if (isInfiniteMode) {
+                this.clearInfiniteSelection();
+            } else {
+                this.clearSelection();
+            }
+        }
+
+        extractPatternFromSelection() {
+            const { startX, startY, endX, endY } = this.selectionRect;
+            // --- BUG FIX: Add validation for selectionRect properties ---
+            if (typeof startX !== 'number' || typeof startY !== 'number' || typeof endX !== 'number' || typeof endY !== 'number') {
+                return null;
+            }
+            const height = endY - startY + 1;
+            const width = endX - startX + 1;
+            if (height <= 0 || width <= 0) return null;
+
+            const pattern = Array(height).fill(null).map(() => Array(width).fill(false));
+            for (let i = 0; i < height; i++) {
+                for (let j = 0; j < width; j++) {
+                    pattern[i][j] = this.grid[startY + i][startX + j] || false;
+                }
+            }
+            return pattern;
+        }
+
+        clearArea(rect) {
+            this.saveToHistory();
+            const { startX, startY, endX, endY } = rect;
+            for (let r = startY; r <= endY; r++) {
+                for (let c = startX; c <= endX; c++) {
+                    if (this.grid[r] && this.grid[r][c]) {
+                        this.grid[r][c] = false;
+                        this.updateCellDisplay(r, c);
+                    }
+                }
+            }
+            this.updateStats();
+        }
+
+        pastePattern(pattern, startRow, startCol) {
+             if (!pattern) return;
+             this.saveToHistory();
+             const pHeight = pattern.length;
+             const pWidth = pattern[0].length;
+             for (let i = 0; i < pHeight; i++) {
+                for (let j = 0; j < pWidth; j++) {
+                    const r = startRow + i;
+                    const c = startCol + j;
+                    if (r >= 0 && r < this.rows && c >= 0 && c < this.cols) {
+                       if (this.grid[r][c] !== pattern[i][j]) {
+                         this.grid[r][c] = pattern[i][j];
+                         this.updateCellDisplay(r, c);
+                       }
+                    }
+                }
+            }
+            this.updateStats();
+        }
+
+        // --- ENHANCEMENT: Pasting and Ghost Logic ---
+        pasteFromClipboard(e) {
+            const cellPos = this.getCellFromEvent(e);
+            if (!cellPos || !this.clipboard) return;
+
+            const p = this.clipboard;
+            const pHeight = p.length;
+            const pWidth = p[0].length;
+            const startRow = cellPos.row - Math.floor(pHeight / 2);
+            const startCol = cellPos.col - Math.floor(pWidth / 2);
+            this.pastePattern(p, startRow, startCol);
+            
+            this.cancelPasting();
+            this.showToast('貼上成功！');
+        }
+
+        cancelPasting() {
+            this.isPasting = false;
+            this.clipboard = null;
+            this.dom.grid.classList.remove('pasting-mode');
+            this.removeGhostElement();
+            this.clearPreview();
+        }
+        
+        // 🖱️ 处理图案库双击事件 - 进入粘贴模式
+        handlePatternDoubleClick(e) {
+            // 🎯 找到被双击的图案卡片
+            const patternCard = e.target.closest('.pattern-card');
+            if (!patternCard) return;
+            
+            // 🚫 如果已经在粘贴模式，先取消当前粘贴
+            if (this.isPasting) {
+                this.cancelPasting();
+                if (this.mode === 'infinite') {
+                    this.dom.infiniteCanvas.classList.remove('pasting-mode');
+                }
+            }
+            
+            // 📋 获取图案数据并设置为剪贴板内容
+            const patternName = patternCard.dataset.patternName;
+            const pattern = PATTERNS_DATA[patternName].pattern;
+            this.clipboard = pattern;
+            
+            // 🎮 进入粘贴模式
+            this.isPasting = true;
+            
+            if (this.mode === 'infinite') {
+                // 🌌 无限模式：添加粘贴模式样式
+                this.dom.infiniteCanvas.classList.add('pasting-mode');
+            } else {
+                // 📏 有限模式：添加粘贴模式样式和幽灵元素
+                this.dom.grid.classList.add('pasting-mode');
+                this.createGhostElement(pattern, true); // 创建粘贴模式的幽灵元素
+            }
+            
+            // 🎉 显示提示信息
+            this.showToast(`📋 ${patternName} 已准备粘贴！左键点击放置位置`);
+        }
+        
+        // --- Drag & Drop, Preview and Ghosting Logic ---
+        
+        handlePatternDragStart(e) {
+            if (!e.target.closest('.pattern-card')) return;
+            
+            const patternName = e.target.closest('.pattern-card').dataset.patternName;
+            this.draggedPattern = PATTERNS_DATA[patternName].pattern;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'copy';
+            
+            this.createGhostElement(this.draggedPattern);
+            const empty = document.createElement('canvas'); // Hide default drag image
+            e.dataTransfer.setDragImage(empty, 0, 0);
+        }
+
+        handleDocumentDragOver(e) {
+            e.preventDefault();
+            this.updateGhostPosition(e);
+            if (this.draggedPattern) {
+                if (e.target.closest('.grid')) {
+                    this.showPreview(e, this.draggedPattern);
+                } else if (e.target.closest('#infiniteCanvas')) {
+                    // 无限画布上显示拖拽预览
+                    this.showInfinitePreview(e, this.draggedPattern);
+                } else {
+                    this.clearPreview();
+                    this.clearInfinitePreview(); // 清除无限画布预览
+                }
+            }
+        }
+
+        handlePatternDragEnd() {
+            document.querySelectorAll('.pattern-card.dragging').forEach(el => el.classList.remove('dragging'));
+            this.draggedPattern = null;
+            this.clearPreview();
+            this.clearInfinitePreview(); // 清除无限画布预览
+            this.removeGhostElement();
+        }
+
+        handlePatternDrop(e) {
+            e.preventDefault();
+            if (!this.draggedPattern) return;
+            
+            // 检查是否拖拽到无限画布
+            if (e.target.closest('#infiniteCanvas') && this.mode === 'infinite') {
+                this.placePatternInfinite(e, this.draggedPattern);
+                this.showToast(`图案已放置到无限宇宙`);
+                return;
+            }
+            
+            // 原有的有限网格拖拽逻辑
+            const cellPos = this.getCellFromEvent(e);
+            if (cellPos) {
+                const { row, col } = cellPos;
+                const p = this.draggedPattern;
+                const startRow = row - Math.floor(p.length / 2);
+                const startCol = col - Math.floor((p[0]?.length || 0) / 2);
+                this.pastePattern(p, startRow, startCol);
+                this.showToast(`图案已放置`);
+            }
+        }
+
+        createGhostElement(pattern, isPastingGhost = false) {
+            this.removeGhostElement();
+            const ghost = document.createElement('div');
+            ghost.className = 'ghost-preview';
+
+            const preview = document.createElement('div');
+            preview.className = 'pattern-preview';
+            const rows = pattern.length;
+            const cols = pattern[0]?.length || 0;
+            preview.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            const ghostCellSize = isPastingGhost ? this.cellSize.width : 6;
+            preview.style.width = `${cols * (ghostCellSize + 1)}px`;
+            preview.style.height = `${rows * (ghostCellSize + 1)}px`;
+            
+            let innerHTML = '';
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    innerHTML += `<div class="mini-cell ${pattern[i][j] ? 'alive' : ''}" style="width:${ghostCellSize}px; height:${ghostCellSize}px;"></div>`;
+                }
+            }
+            preview.innerHTML = innerHTML;
+
+            ghost.appendChild(preview);
+            this.dom.ghost = ghost;
+            document.body.appendChild(this.dom.ghost);
+        }
+
+        updateGhostPosition(e) {
+            if (this.dom.ghost) {
+                this.dom.ghost.style.left = `${e.clientX}px`;
+                this.dom.ghost.style.top = `${e.clientY}px`;
+            }
+        }
+
+        removeGhostElement() {
+            if (this.dom.ghost) {
+                this.dom.ghost.remove();
+                this.dom.ghost = null;
+            }
+        }
+        
+        showPreview(e, pattern) {
+            this.clearPreview();
+            if (!pattern) return;
+            const cellPos = this.getCellFromEvent(e);
+            if (cellPos) {
+                 const { row, col } = cellPos;
+                 const pHeight = pattern.length;
+                 const pWidth = pattern[0]?.length || 0;
+                 const startRow = row - Math.floor(pHeight / 2);
+                 const startCol = col - Math.floor(pWidth / 2);
+
+                 for (let i = 0; i < pHeight; i++) {
+                     for (let j = 0; j < pWidth; j++) {
+                         if (pattern[i][j]) {
+                             const r = startRow + i;
+                             const c = startCol + j;
+                             const cell = this.dom.grid.children[r * this.cols + c];
+                             if (cell) {
+                                cell.classList.add('preview');
+                                this.previewCells.push(cell);
+                             }
+                         }
+                     }
+                 }
+            }
+        }
+        
+        clearPreview() {
+            this.previewCells.forEach(cell => cell.classList.remove('preview'));
+            this.previewCells = [];
+        }
+
+        // --- Pattern Transformation ---
+        handlePatternActionsClick(e) {
+            const button = e.target.closest('.pattern-action-btn');
+            if (!button) return;
+
+            const { action, patternName } = button.dataset;
+            PATTERNS_DATA[patternName].pattern = this.transformPattern(PATTERNS_DATA[patternName].pattern, action);
+            this.filterPatterns(this.currentCategory); // 保持在当前分类中刷新图案网格
+        }
+        
+        transformPattern(pattern, action) {
+            if (!pattern || pattern.length === 0) return pattern;
+            let newPattern;
+            const rows = pattern.length;
+            const cols = pattern[0]?.length || 0;
+            switch (action) {
+                case 'rotate':
+                    newPattern = Array(cols).fill(null).map(() => Array(rows).fill(0));
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            newPattern[c][rows - 1 - r] = pattern[r][c];
+                        }
+                    }
+                    break;
+                case 'flip-h':
+                    newPattern = pattern.map(row => [...row].reverse());
+                    break;
+                case 'flip-v':
+                     newPattern = [...pattern].reverse();
+                    break;
+                default:
+                    return pattern;
+            }
+            return newPattern;
+        }
+
+        // --- Save & Load (Largely unchanged) ---
+        // (Methods like toggleModal, saveState, loadSavedStates, handleSavedStateClick are here)
+        // Omitted for brevity, they are the same as the original file.
+        createPatternCategories() {
+            const categories = ['all', 'static', 'oscillator', 'spaceship', 'gun', 'complex'];
+            const categoryMap = { 'all': '全部', 'static': '🏠 静物', 'oscillator': '🔄 振荡器', 'spaceship': '🚀 飞船', 'gun': '🔫 发射器', 'complex': '⚡ 复杂'};
+            this.dom.categoryTabs.innerHTML = categories.map(cat => `<button class="category-tab ${cat === this.currentCategory ? 'active' : ''}" data-category="${cat}">${categoryMap[cat] || cat}</button>`).join('');
+        }
+        filterPatterns(category = 'all') { /* ... same as original ... */ this.currentCategory=category; document.querySelectorAll('#categoryTabs .category-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.category === category)); const filtered = Object.entries(PATTERNS_DATA).filter(([name, data]) => category === 'all' || data.category === category); this.dom.patternGrid.innerHTML = filtered.map(([name, data]) => { const p = data.pattern; const rows = p.length; const cols = p[0]?.length||0; let previewHTML = `<div class="pattern-preview" style="grid-template-columns: repeat(${cols}, 1fr);">`; for (let i = 0; i < rows; i++) { for (let j = 0; j < cols; j++) { previewHTML += `<div class="mini-cell ${p[i][j] ? 'alive' : ''}"></div>`; } } previewHTML += '</div>'; return `<div class="pattern-card" draggable="true" data-pattern-name="${name}"><div>${previewHTML}<div class="pattern-name">${name}</div></div><div class="pattern-actions"><button class="pattern-action-btn" data-action="rotate" data-pattern-name="${name}" title="旋轉">↻</button><button class="pattern-action-btn" data-action="flip-h" data-pattern-name="${name}" title="左右顛倒">↔️</button><button class="pattern-action-btn" data-action="flip-v" data-pattern-name="${name}" title="上下顛倒">↕️</button></div></div>`; }).join(''); }
+        toggleModal(show) { this.dom.saveModal.classList.toggle('show', show); if(show) this.dom.saveNameInput.value = `狀態_${new Date().toLocaleDateString()}`; }
+        saveState() { const name = this.dom.saveNameInput.value.trim(); if (!name) { this.showToast('請輸入存檔名稱', 'warning'); return; } const state = { name, grid: this.grid, generation: this.generation, rows: this.rows, cols: this.cols, isBounded: this.isBounded, timestamp: Date.now() }; let savedStates = JSON.parse(localStorage.getItem('gameOfLifeStates') || '[]'); savedStates.push(state); localStorage.setItem('gameOfLifeStates', JSON.stringify(savedStates)); this.showToast('狀態已儲存'); this.loadSavedStates(); }
+        loadSavedStates() { const savedStates = JSON.parse(localStorage.getItem('gameOfLifeStates') || '[]'); this.dom.savedStatesList.innerHTML = savedStates.length ? savedStates.map((state, index) => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 5px; margin-bottom: 5px;"><div>${state.name} <small>(${new Date(state.timestamp).toLocaleString()})</small></div><div><button class="btn" data-action="load" data-index="${index}">載入</button><button class="btn danger" data-action="delete" data-index="${index}">刪除</button></div></div>`).join('') : '<p>尚無存檔。</p>'; }
+        handleSavedStateClick(e) { const target = e.target.closest('button'); if(!target) return; const { action, index } = target.dataset; let savedStates = JSON.parse(localStorage.getItem('gameOfLifeStates') || '[]'); if (action === 'load') { const state = savedStates[index]; if (state) { this.pause(); this.rows = state.rows; this.cols = state.cols; this.isBounded = state.isBounded || false; this.grid = state.grid; this.generation = state.generation; this.dom.gridSizeSelect.value = `${state.rows},${state.cols},${this.isBounded}`; this.createGridElements(); this.updateFullGridDisplay(); this.updateStats(); this.toggleModal(false); const modeText = this.isBounded ? '有界模式' : '无界模式'; this.showToast(`已載入 "${state.name}" (${modeText})`); } } else if (action === 'delete') { savedStates.splice(index, 1); localStorage.setItem('gameOfLifeStates', JSON.stringify(savedStates)); this.loadSavedStates(); } }
+        toggleFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); } else { document.exitFullscreen(); } }
+        // 导出带完整RLE描述的PNG图片
+        exportImage() {
+            // 获取当前网格的RLE信息
+            const patternInfo = gridToRLE(this.grid);
+            if (!patternInfo || patternInfo.width === 0) {
+                this.showToast('画布是空的，无法导出', 'warning');
+                return;
+            }
+
+            // 创建完整的RLE字符串，包含头部信息
+            const ruleString = `B${this.rules.b.join('')}/S${this.rules.s.join('')}`;
+            const header = `x = ${patternInfo.width}, y = ${patternInfo.height}, rule = ${ruleString}`;
+            const fullRLEString = header + '\n' + patternInfo.rle;
+
+            // 创建画布和绘图上下文
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 根据图案尺寸计算合适的细胞大小，确保图案清晰可见
+            const minCellSize = 8; // 最小细胞大小
+            const maxCellSize = 20; // 最大细胞大小
+            const maxPatternWidth = 600; // 图案区域最大宽度
+            
+            // 计算最佳细胞大小
+            let cellSize = Math.min(maxCellSize, Math.max(minCellSize, Math.floor(maxPatternWidth / patternInfo.width)));
+            
+            const padding = 20; // 边距
+            const fontHeight = 14; // 字体高度
+            const lineHeight = 18; // 行高
+            
+            // 使用RLE图案的实际尺寸，而不是整个画布尺寸
+            const patternPixelWidth = patternInfo.width * cellSize; // 图案像素宽度
+            const patternPixelHeight = patternInfo.height * cellSize; // 图案像素高度
+
+            // 设置字体以测量文本
+            ctx.font = `${fontHeight}px monospace`;
+            
+            // 将RLE字符串分行并自动换行（基于图案宽度）
+            const lines = fullRLEString.split('\n').flatMap(line => {
+                const lineLines = [];
+                let currentLine = '';
+                const chars = line.split(''); // 按字符分割
+                
+                for(const char of chars) {
+                    const testLine = currentLine + char;
+                    // 如果当前行加上新字符超过宽度限制，就换行
+                    if (ctx.measureText(testLine).width > patternPixelWidth - padding && currentLine) {
+                        lineLines.push(currentLine);
+                        currentLine = char;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                lineLines.push(currentLine);
+                return lineLines;
+            });
+            
+            // 计算文本总高度
+            const textHeight = lines.length * lineHeight;
+            
+            // 设置画布尺寸（确保足够宽度显示文本和图案）
+            canvas.width = Math.max(patternPixelWidth, 400);
+            canvas.height = patternPixelHeight + textHeight + padding * 2;
+
+            // 绘制背景
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 找到网格中活细胞的边界，只绘制实际图案区域
+            let minRow = this.rows, maxRow = -1;
+            let minCol = this.cols, maxCol = -1;
+            let hasLiveCells = false;
+            
+            // 找到活细胞的边界
+            for (let i = 0; i < this.rows; i++) {
+                for (let j = 0; j < this.cols; j++) {
+                    if (this.grid[i][j]) {
+                        hasLiveCells = true;
+                        minRow = Math.min(minRow, i);
+                        maxRow = Math.max(maxRow, i);
+                        minCol = Math.min(minCol, j);
+                        maxCol = Math.max(maxCol, j);
+                    }
+                }
+            }
+            
+            // 绘制活细胞（只绘制图案区域，居中显示）
+            if (hasLiveCells) {
+                ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim();
+                const offsetX = (canvas.width - patternPixelWidth) / 2; // 水平居中偏移
+                
+                for (let i = minRow; i <= maxRow; i++) {
+                    for (let j = minCol; j <= maxCol; j++) {
+                        if (this.grid[i][j]) {
+                            const x = offsetX + (j - minCol) * cellSize;
+                            const y = (i - minRow) * cellSize;
+                            ctx.fillRect(x, y, cellSize, cellSize);
+                        }
+                    }
+                }
+            }
+            
+            // 绘制RLE描述文本
+            ctx.fillStyle = 'white';
+            ctx.font = `${fontHeight}px monospace`;
+            let y = patternPixelHeight + padding + fontHeight; // 文本起始Y坐标（基于图案高度）
+            
+            for (const line of lines) {
+                ctx.fillText(line, padding / 2, y);
+                y += lineHeight;
+            }
+            
+            // 下载PNG文件（文件名包含规则信息）
+            const link = document.createElement('a');
+            link.download = `生命游戏_第${this.generation}代_${ruleString}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            this.showToast(`已导出带RLE描述的PNG图片 (${patternInfo.width}x${patternInfo.height})`, 'success');
+        }
+        showToast(message, type = 'success') { const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        window.game = new GameOfLife();
+    });
+    </script>
+</body>
+</html>
